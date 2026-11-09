@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What we would do next · AutoHub Assistant</title>
+<link rel="icon" href="img/logo.svg"><link rel="stylesheet" href="style.css">
+</head><body>
+<header class="site"><div class="wrap">
+<a class="logo" href="index.html"><img src="img/logo.svg" alt="">AutoHub Assistant</a>
+<nav class="pages"><a href="index.html">Summary</a><a href="system.html">System & card</a><a href="infrastructure.html">Infrastructure</a><a href="baseline.html">Baseline</a><a href="well-architected.html">Well-Architected</a><a href="operations.html">Monitoring · Backup · Security</a><a href="automation.html">Automation & incident</a><a href="results.html">Results</a><a href="next.html" class="on">Next steps</a><a href="declaration.html">Declaration</a></nav></div></header>
+<main><div class="wrap">
+<p class="kicker">WS-G.9</p>
+<h1>What we would do next, in priority order</h1>
+<ol>
+<li><strong>Alarm on failed answers, not just a live website.</strong> INC-04 showed the gap: the site was up, so the health check was green, but every answer failed for about 25 minutes.
+<code>request-log.sh</code> already writes <code>"ok":false</code> for each failed answer. A CloudWatch metric filter on that field and an alarm at more than 5% failed over 15 minutes
+(Appendix A, “AnswersFailed”) would have caught INC-04 within one evaluation period. This is about 30 minutes of work and costs nothing.</li>
+<li><strong>Least-privilege console access.</strong> Move from one federated full-access role to IAM Identity Center: an operator permission set with MFA enforced, and admin only through a role switch.
+This is the first gap on the <a href="well-architected.html">Well-Architected review</a>.</li>
+<li><strong>Close the CloudFront → EC2 gap.</strong> Add a secret custom header in CloudFront that the server checks, so other CloudFront distributions cannot reach port 3080. Alternatively, use a CloudFront VPC origin so the instance needs no public IP at all.</li>
+<li><strong>Nightly evaluation as a third automation.</strong> Run <code>app/eval.py</code> from a systemd timer every night, publish the pass rate as a metric, and alarm if it drops below 80%.
+A silent model change by the provider (INC-02) would then show up the next morning.</li>
+<li><strong>Deploy from the repository.</strong> A GitHub Actions workflow that, on a push to <code>main</code>, syncs <code>app/</code> and <code>content/</code> to S3 and runs <code>ops.sh redeploy</code> through an OIDC role. That replaces copying files into CloudShell by hand.</li>
+</ol>
+<p class="note">We deliberately did <em>not</em> list multi-AZ or a managed database. For a single-dealership demo they would roughly triple the cost, while a tested 32-second restore and a 15-minute rebuild cover the realistic failure cases.</p>
+
+</div></main>
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
+All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
+<script>
+document.querySelectorAll('img[data-shot]').forEach(function(img){
+  img.addEventListener('error',function(){
+    var d=document.createElement('div');d.className='shot-missing';
+    d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
+    img.replaceWith(d);});
+});
+</script>
+</body></html>

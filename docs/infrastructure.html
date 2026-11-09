@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AWS infrastructure design · AutoHub Assistant</title>
+<link rel="icon" href="img/logo.svg"><link rel="stylesheet" href="style.css">
+</head><body>
+<header class="site"><div class="wrap">
+<a class="logo" href="index.html"><img src="img/logo.svg" alt="">AutoHub Assistant</a>
+<nav class="pages"><a href="index.html">Summary</a><a href="system.html">System & card</a><a href="infrastructure.html" class="on">Infrastructure</a><a href="baseline.html">Baseline</a><a href="well-architected.html">Well-Architected</a><a href="operations.html">Monitoring · Backup · Security</a><a href="automation.html">Automation & incident</a><a href="results.html">Results</a><a href="next.html">Next steps</a><a href="declaration.html">Declaration</a></nav></div></header>
+<main><div class="wrap">
+<p class="kicker">WS-A.4 · E-18</p>
+<h1>AWS infrastructure design</h1>
+<p class="lede">Everything runs in one AWS account (482882341880) in <strong>ap-southeast-2, Sydney</strong>. The diagram shows
+every service we run and the path a customer's question takes, numbered ① to ⑦.</p>
+
+<svg class="diagram" viewBox="0 0 960 600" role="img" aria-label="AutoHub architecture diagram" font-family="Inter,Segoe UI,sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e0902f"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7a8a93"/></marker>
+  </defs>
+  <style>
+    .box{fill:#ffffff;stroke:#0f3d3e;stroke-width:1.5;rx:10}
+    .zone{fill:#eef4f3;stroke:#9fbcb9;stroke-dasharray:5 4}
+    .t{font-size:14px;font-weight:700;fill:#16222a}
+    .s{font-size:12px;fill:#56656f}
+    .n{font-size:13px;font-weight:700;fill:#e0902f}
+    .flow{stroke:#e0902f;stroke-width:2.4;fill:none;marker-end:url(#ar)}
+    .ops{stroke:#7a8a93;stroke-width:1.4;fill:none;stroke-dasharray:4 3;marker-end:url(#ag)}
+    @media (prefers-color-scheme: dark){
+      .box{fill:#172126;stroke:#7cc3bd}.zone{fill:#13201f;stroke:#35514e}.t{fill:#e6ecef}.s{fill:#9fb0b9}
+    }
+  </style>
+
+  <!-- user -->
+  <rect class="box" x="20" y="250" width="130" height="70"/>
+  <text class="t" x="85" y="280" text-anchor="middle">Customer</text>
+  <text class="s" x="85" y="298" text-anchor="middle">web browser</text>
+
+  <!-- cloudfront -->
+  <rect class="box" x="200" y="250" width="150" height="70"/>
+  <text class="t" x="275" y="278" text-anchor="middle">CloudFront</text>
+  <text class="s" x="275" y="296" text-anchor="middle">HTTPS, free TLS cert</text>
+  <text class="s" x="275" y="311" text-anchor="middle">no caching (dynamic chat)</text>
+
+  <!-- region zone -->
+  <rect class="zone" x="390" y="30" width="550" height="540" rx="14"/>
+  <text class="s" x="404" y="52">AWS region ap-southeast-2 (Sydney) · default VPC</text>
+
+  <!-- security group + EC2 -->
+  <rect class="zone" x="410" y="180" width="300" height="230" rx="12" style="fill:none"/>
+  <text class="s" x="422" y="198">Security group: TCP 3080 from CloudFront prefix list only, no SSH</text>
+  <rect class="box" x="425" y="210" width="270" height="185"/>
+  <text class="t" x="560" y="234" text-anchor="middle">EC2 t3.small · Amazon Linux 2023</text>
+  <text class="s" x="560" y="251" text-anchor="middle">Elastic IP · encrypted 30 GB gp3 · IMDSv2 · 2 GB swap</text>
+  <rect class="box" x="440" y="263" width="115" height="52" style="stroke-width:1"/>
+  <text class="t" x="497" y="285" text-anchor="middle" style="font-size:13px">LibreChat api</text>
+  <text class="s" x="497" y="301" text-anchor="middle">“AutoHub” :3080</text>
+  <rect class="box" x="565" y="263" width="115" height="52" style="stroke-width:1"/>
+  <text class="t" x="622" y="285" text-anchor="middle" style="font-size:13px">MongoDB</text>
+  <text class="s" x="622" y="301" text-anchor="middle">users, chats</text>
+  <rect class="box" x="440" y="325" width="115" height="52" style="stroke-width:1"/>
+  <text class="t" x="497" y="347" text-anchor="middle" style="font-size:13px">Meilisearch</text>
+  <text class="s" x="497" y="363" text-anchor="middle">chat search</text>
+  <rect class="box" x="565" y="325" width="115" height="52" style="stroke-width:1"/>
+  <text class="t" x="622" y="345" text-anchor="middle" style="font-size:12px">systemd timers</text>
+  <text class="s" x="622" y="361" text-anchor="middle">health 5 min</text>
+  <text class="s" x="622" y="373" text-anchor="middle">backup 6 h</text>
+
+  <!-- S3 -->
+  <rect class="box" x="750" y="70" width="170" height="80"/>
+  <text class="t" x="835" y="96" text-anchor="middle">S3 content bucket</text>
+  <text class="s" x="835" y="113" text-anchor="middle">content/ inventory, policies</text>
+  <text class="s" x="835" y="128" text-anchor="middle">app/ scripts · backups/ 8 days</text>
+  <text class="s" x="835" y="143" text-anchor="middle">private · SSE · versioned</text>
+
+  <!-- SSM -->
+  <rect class="box" x="425" y="70" width="270" height="80"/>
+  <text class="t" x="560" y="96" text-anchor="middle">Systems Manager</text>
+  <text class="s" x="560" y="113" text-anchor="middle">Parameter Store /autohub/* (SecureString):</text>
+  <text class="s" x="560" y="128" text-anchor="middle">Gemini key, JWT, creds, Meili key, model</text>
+  <text class="s" x="560" y="143" text-anchor="middle">Run Command + Session Manager (no SSH)</text>
+
+  <!-- CloudWatch/SNS -->
+  <rect class="box" x="750" y="250" width="170" height="95"/>
+  <text class="t" x="835" y="274" text-anchor="middle">CloudWatch</text>
+  <text class="s" x="835" y="291" text-anchor="middle">agent: mem, disk · 4 log groups</text>
+  <text class="s" x="835" y="306" text-anchor="middle">14-day retention · 7 alarms</text>
+  <text class="s" x="835" y="321" text-anchor="middle">dashboard autohub-operations</text>
+  <rect class="box" x="750" y="380" width="170" height="60"/>
+  <text class="t" x="835" y="405" text-anchor="middle">SNS autohub-alerts</text>
+  <text class="s" x="835" y="423" text-anchor="middle">email → operator</text>
+
+  <!-- account-wide -->
+  <rect class="box" x="425" y="460" width="270" height="90"/>
+  <text class="t" x="560" y="484" text-anchor="middle">Account-wide controls</text>
+  <text class="s" x="560" y="502" text-anchor="middle">CloudTrail autohub-trail → trail bucket (90 d)</text>
+  <text class="s" x="560" y="518" text-anchor="middle">AWS Budgets $10/month → email</text>
+  <text class="s" x="560" y="534" text-anchor="middle">IAM role autohub-ec2-role (least privilege)</text>
+
+  <!-- Gemini outside -->
+  <rect class="box" x="200" y="470" width="150" height="80" style="stroke:#e0902f"/>
+  <text class="t" x="275" y="497" text-anchor="middle">Google Gemini API</text>
+  <text class="s" x="275" y="514" text-anchor="middle">gemini-3.5-flash</text>
+  <text class="s" x="275" y="530" text-anchor="middle">outside AWS · free tier</text>
+
+  <!-- request flow -->
+  <path class="flow" d="M150,275 L198,275"/><text class="n" x="160" y="266">①</text>
+  <path class="flow" d="M350,275 L438,285"/><text class="n" x="380" y="270">②</text>
+  <path class="flow" d="M450,315 C380,420 360,480 352,500"/><text class="n" x="372" y="420">④</text>
+  <path class="flow" d="M352,520 C400,520 470,420 480,318"/><text class="n" x="418" y="470">⑤</text>
+  <path class="flow" d="M555,290 L563,290"/><text class="n" x="553" y="278" style="font-size:11px">⑥</text>
+  <path class="flow" d="M200,295 L152,295"/><text class="n" x="166" y="312">⑦</text>
+  <!-- ops arrows -->
+  <path class="ops" d="M520,210 L520,152"/><text class="n" x="526" y="190">③</text>
+  <path class="ops" d="M660,210 C700,170 730,130 748,115"/>
+  <path class="ops" d="M695,300 L748,298"/>
+  <path class="ops" d="M835,345 L835,378"/>
+</svg>
+
+<h2>How a question travels</h2>
+<ol>
+<li><strong>①</strong> The customer types a question at <code>https://dd56jth94yne6.cloudfront.net</code>. The browser sends it over HTTPS to CloudFront.</li>
+<li><strong>②</strong> CloudFront forwards it, without caching, to the EC2 instance's Elastic IP on port 3080. The security group only accepts traffic from CloudFront's own address list.</li>
+<li><strong>③</strong> When LibreChat starts, <code>start-autohub.sh</code> reads every secret from Parameter Store using the instance role, and reads the dealership content from S3. It then builds the system prompt.</li>
+<li><strong>④</strong> LibreChat sends the system prompt, the conversation and the question to Google's Gemini API over HTTPS.</li>
+<li><strong>⑤</strong> Gemini streams the answer back.</li>
+<li><strong>⑥</strong> LibreChat stores the conversation in MongoDB, and Meilisearch indexes it for chat search.</li>
+<li><strong>⑦</strong> The answer streams back through CloudFront to the browser.</li>
+</ol>
+<p>Grey dashed arrows are operations traffic. The instance ships logs and metrics to CloudWatch, alarms go to SNS and then email,
+and backups go to S3. We reach the instance only through Systems Manager, never SSH.</p>
+
+<h2>Service list</h2>
+<div class="tablewrap"><table>
+<tr><th>Service</th><th>Resource</th><th>What it is for</th></tr>
+<tr><td>EC2</td><td><code>i-0e4895bb0aab93848</code> t3.small, Elastic IP</td><td>Runs LibreChat, MongoDB and Meilisearch in Docker</td></tr>
+<tr><td>CloudFront</td><td><code>E3SG8RUFGFD2RI</code></td><td>Public HTTPS URL with a free certificate. Hides the instance</td></tr>
+<tr><td>S3</td><td><code>autohub-content-482882341880-ap-southeast-2</code></td><td>Dealership content (the AWS integration), deploy scripts, database backups</td></tr>
+<tr><td>Systems Manager</td><td>Parameter Store <code>/autohub/*</code>, Run Command, Session Manager</td><td>Secrets at runtime; remote administration without SSH</td></tr>
+<tr><td>IAM</td><td><code>autohub-ec2-role</code></td><td>Instance can read only its own parameters and bucket paths, and write only to <code>backups/</code></td></tr>
+<tr><td>CloudWatch</td><td>dashboard, 7 alarms, 4 log groups</td><td>Monitoring and logs</td></tr>
+<tr><td>SNS</td><td><code>autohub-alerts</code></td><td>Alarm emails</td></tr>
+<tr><td>CloudTrail</td><td><code>autohub-trail</code></td><td>Who did what in the account</td></tr>
+<tr><td>Budgets</td><td><code>autohub-monthly</code> $10</td><td>Cost alert at 50% actual and 100% forecast</td></tr>
+<tr><td><em>Outside AWS</em></td><td>Google Gemini API</td><td>The AI model. It only ever receives invented data</td></tr>
+</table></div>
+<p>There is deliberately no load balancer and no RDS. One instance with a database in a container keeps the cost near zero for a
+single-dealership demo. The trade-off is explained in the <a href="well-architected.html">Well-Architected review</a>.</p>
+
+</div></main>
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
+All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
+<script>
+document.querySelectorAll('img[data-shot]').forEach(function(img){
+  img.addEventListener('error',function(){
+    var d=document.createElement('div');d.className='shot-missing';
+    d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
+    img.replaceWith(d);});
+});
+</script>
+</body></html>

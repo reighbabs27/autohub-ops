@@ -1,0 +1,115 @@
+<!-- title: Monitoring, backup and security -->
+<p class="kicker">WS-B · WS-C · WS-D</p>
+<h1>Monitoring, backup and restore, security</h1>
+
+<h2 id="monitoring">Monitoring (WS-B)</h2>
+<h3>Dashboard <code>autohub-operations</code> (E-06)</h3>
+<figure><img data-shot src="img/e06-dashboard.png" alt="CloudWatch dashboard autohub-operations with real data"><figcaption>
+Widgets: CloudFront requests; CloudFront 4xx/5xx error rate; response time from the health check through HTTPS; CPU;
+disk % and memory %; health OK and backups succeeded. The alarm status strip is at the bottom.</figcaption></figure>
+<p><strong>Why these thresholds, in one sentence (as written on the dashboard):</strong> CPU 85% for 10 minutes and memory 90% leave headroom before a small instance
+starts killing containers. Disk alarms at 85%, checked every 5 minutes, because chat logs and backups can fill 30 GB quickly.
+The health check must pass through CloudFront every 5 minutes. Answers slower than 3 s feel broken to a customer.
+A backup must succeed every 6 hours so the RPO stays under 6 hours.</p>
+
+<h3>Seven alarms, all emailing the operator (E-07)</h3>
+<div class="tablewrap"><table>
+<tr><th>Alarm</th><th>Metric</th><th>Threshold</th><th>Appendix A equivalent</th></tr>
+<tr><td>autohub-assistant-down</td><td>AutoHub/HealthCheckOK (min)</td><td>&lt; 1 for 2 × 5 min; missing data counts as failing</td><td>RequestCount drop / 5XX (we have no load balancer)</td></tr>
+<tr><td>autohub-slow-response</td><td>AutoHub/HealthCheckLatencyMs (avg)</td><td>&gt; 3000 ms for 3 × 5 min</td><td>TargetResponseTime &gt; 3 s</td></tr>
+<tr><td>autohub-cpu-high</td><td>AWS/EC2 CPUUtilization</td><td>&gt; 85% for 2 × 5 min</td><td>CPUUtilization</td></tr>
+<tr><td>autohub-status-check-failed</td><td>AWS/EC2 StatusCheckFailed</td><td>&gt; 0 for 2 × 1 min</td><td>StatusCheckFailed</td></tr>
+<tr><td>autohub-memory-high</td><td>CWAgent mem_used_percent</td><td>&gt; 90% for 5 min</td><td>MemoryUtilization</td></tr>
+<tr><td>autohub-disk-high</td><td>CWAgent disk_used_percent</td><td>&gt; 85% for 5 min</td><td>DiskSpaceUsed (we check every 5 min, not hourly)</td></tr>
+<tr><td>autohub-backup-missed</td><td>AutoHub/BackupSucceeded (sum)</td><td>&lt; 1 over 7 × 1 h; missing data counts as failing</td><td>Replaces the RDS rows (our database is a container)</td></tr>
+</table></div>
+<figure><img data-shot src="img/e07-alarms.png" alt="CloudWatch alarms list, all 7 OK"><figcaption>All seven alarms in the CloudWatch console.</figcaption></figure>
+
+<h3>A real alert arrived (E-08)</h3>
+<p>On 9 Nov 2026 at <strong>01:07:05 UTC</strong> we stopped the LibreChat container on purpose. The health check failed at 01:10 and 01:15.
+The alarm went from OK to ALARM at <strong>01:16:03 UTC</strong> and SNS emailed the operator. We restored service at 01:20:45, which sent the OK email.</p>
+<pre><code>$ aws cloudwatch describe-alarm-history --alarm-name autohub-assistant-down --history-item-type StateUpdate
+2026-11-09T01:16:03.441000+00:00   Alarm updated from OK to ALARM
+2026-11-08T16:21:03.437000+00:00   Alarm updated from ALARM to OK
+2026-11-08T16:13:03.437000+00:00   Alarm updated from INSUFFICIENT_DATA to ALARM</code></pre>
+<figure><img data-shot src="img/e08-alert-email.png" alt="ALARM email in Gmail with date and time visible"><figcaption>The ALARM email as received, with date and time visible.</figcaption></figure>
+
+<h3>Logs and request logging (E-09)</h3>
+<p>Four CloudWatch log groups with <strong>14-day retention</strong>:
+<code>/autohub/app</code> (LibreChat debug log, one entry per request, with the model and endpoint used),
+<code>/autohub/mongodb</code> (database container), <code>/autohub/automation</code> (health check, backup, restore, evaluation) and
+<code>/autohub/deploy</code> (bootstrap and each deploy, with the LibreChat build).
+Every health-check line records the outcome, the HTTP codes and the duration:</p>
+<pre><code>2026-11-09T00:25:03+00:00 health ok=1 local_http=200 public_http=200 latency_ms=714
+2026-11-09T01:10:04+00:00 health ok=0 local_http=000 public_http=504 latency_ms=1138   &lt;- planned outage
+2026-11-09T01:05:32+00:00 [deploy] deployed build f4154b6</code></pre>
+<figure><img data-shot src="img/e09-request-log.png" alt="CloudWatch Logs /autohub/app showing a request entry"><figcaption>A sample request from <code>/autohub/app</code>.</figcaption></figure>
+
+<h2 id="backup">Backup and restore (WS-C)</h2>
+<h3>What we would have to restore</h3>
+<div class="tablewrap"><table>
+<tr><th>Item</th><th>Where it lives</th><th>How it is protected</th></tr>
+<tr><td>MongoDB database (users, conversations, messages)</td><td>Docker volume on the EC2 disk</td><td><code>mongodump</code> to S3 every 6 h, kept 8 days</td></tr>
+<tr><td>Dealership content (inventory, policies)</td><td>S3 <code>content/</code> and Git</td><td>S3 versioning (old versions kept 30 days) and the Git history</td></tr>
+<tr><td>Configuration and deploy scripts</td><td>Git repository, copied to S3 <code>app/</code></td><td>Git history. The whole stack rebuilds with <code>01</code>–<code>04</code> scripts</td></tr>
+<tr><td>Secrets (Gemini key, JWT and credential keys, Meilisearch key)</td><td>Parameter Store <code>/autohub/*</code></td><td>Stored by AWS, separate from the instance. Losing the instance does not lose them</td></tr>
+<tr><td>Search index</td><td>Meilisearch volume</td><td>Not backed up: LibreChat rebuilds it from MongoDB</td></tr>
+</table></div>
+
+<h3>Backups configured (E-10)</h3>
+<pre><code>$ ./ops.sh backup
+2026-11-09T00:45:55+00:00 backup OK s3://autohub-content-482882341880-ap-southeast-2/backups/mongo/LibreChat-20261109T004552Z.archive.gz size=15835B
+
+S3 lifecycle: backups/  -> expire after 8 days (brief: at least 7)
+               content/  -> non-current versions expire after 30 days, versioning Enabled</code></pre>
+
+<h3>The restore test (E-11)</h3>
+<pre><code>$ ./ops.sh restore-verify          (9 Nov 2026, into a throw-away MongoDB container)
+[restore-verify] using s3://…/backups/mongo/LibreChat-20261109T004552Z.archive.gz
+74 document(s) restored successfully. 0 document(s) failed to restore.
+LIVE database:   users=1  conversations=2  messages=6
+RESTORED copy:   users=1  conversations=2  messages=6
+[restore-verify] finished in 32 s (use this for RTO)</code></pre>
+<p>The restored copy had exactly the same users, conversations and messages as the live database. For a full restore into the running system,
+<code>./ops.sh restore-live</code> takes a safety copy first, restores with <code>--drop</code>, and restarts the app so you can log in and see the chats.</p>
+
+<h3>RPO and RTO</h3>
+<p><strong>RPO, 6 hours:</strong> backups run at 00:00, 06:00, 12:00 and 18:00 UTC, so in the worst case we lose up to 6 hours of conversations. The dealership content and settings lose nothing, because they live in Git, S3 and Parameter Store.
+<strong>RTO, about 1 minute for the data and about 20 minutes for the whole server:</strong> a database restore took 32 s. Rebuilding a lost instance with <code>02-launch-ec2.sh</code> and then restoring takes about 15–20 minutes, mostly waiting for Docker images.</p>
+
+<h2 id="security">Security (WS-D)</h2>
+<div class="tablewrap"><table>
+<tr><th>Control</th><th>Before (stock LibreChat)</th><th>After (AutoHub)</th><th>Risk it addresses</th></tr>
+<tr><td>Secrets</td><td>Plain <code>.env</code> with public sample JWT/credential keys</td><td>6 SecureStrings in Parameter Store, fresh random values, read at start-up. The <code>.env</code> is generated on the server with mode 600 and never committed</td><td>Stolen code or a stolen repo cannot reveal keys or forge logins</td></tr>
+<tr><td>Key validation</td><td>Whatever was pasted got stored</td><td>The key is tested with Google before it is saved</td><td>A broken or doubled key cannot take the assistant down silently (INC-02)</td></tr>
+<tr><td>Network exposure</td><td>Port 3080 open to anyone</td><td>Security group allows 3080 only from CloudFront's managed prefix list. No port 22</td><td>Nobody can reach the server directly or brute-force SSH</td></tr>
+<tr><td>Admin access to the server</td><td>SSH key</td><td>Systems Manager Session Manager and Run Command, logged in CloudTrail</td><td>No SSH keys to leak, and every remote command is audited</td></tr>
+<tr><td>Instance permissions</td><td>n/a</td><td>Role can read only <code>/autohub/*</code> and its own bucket paths, and write only <code>backups/</code>. KMS decrypt only via SSM</td><td>A compromised app cannot read other secrets or change content</td></tr>
+<tr><td>Transport</td><td>HTTP</td><td>HTTPS at CloudFront, with HTTP redirected to HTTPS</td><td>Passwords and chats are encrypted between the customer and AWS</td></tr>
+<tr><td>Encryption at rest</td><td>none</td><td>EBS volume encrypted. Both S3 buckets SSE-S3 and blocked from public access</td><td>A copied disk or bucket object is unreadable</td></tr>
+<tr><td>Instance metadata</td><td>IMDSv1 allowed</td><td>IMDSv2 required</td><td>SSRF attacks cannot steal the role credentials</td></tr>
+<tr><td>Audit trail</td><td>none</td><td>CloudTrail <code>autohub-trail</code> logging in ap-southeast-2, kept 90 days</td><td>We can see who changed what, and when</td></tr>
+<tr><td>Accounts</td><td>Open registration</td><td>Registration closed after the operator's account was made</td><td>Strangers cannot create accounts and burn the AI quota</td></tr>
+<tr><td>Personal data</td><td>n/a</td><td>All content invented. The system prompt refuses to collect names, addresses, ID or income. Evaluation case Q27 checks this</td><td>Nothing personal reaches Google (§1.2 check)</td></tr>
+<tr><td>Cost</td><td>none</td><td>$10/month budget with email at 50% actual and 100% forecast</td><td>A runaway loop is caught before it becomes a bill</td></tr>
+</table></div>
+
+<h3>MFA and console users (E-12)</h3>
+<p>The account is used by one person. Console sign-in is federated through the role <code>AccountFullAccessRole</code>, so
+<code>aws iam list-users</code> returns no IAM users (and <code>list-virtual-mfa-devices</code> returns 0), so there is no shared administrator login.
+MFA on the operator's sign-in is shown in the screenshot below.
+Moving to IAM Identity Center with a least-privilege permission set is the first gap on the
+<a href="well-architected.html">Well-Architected review</a>.</p>
+<figure><img data-shot src="img/e12-mfa.png" alt="Account security page showing MFA enabled"><figcaption>MFA enabled on the operator's sign-in.</figcaption></figure>
+<h3>Secrets in Parameter Store (E-13)</h3>
+<pre><code>$ aws ssm get-parameters-by-path --path /autohub --query 'Parameters[].[Name,Type]' --output table
+/autohub/allow_registration    String
+/autohub/creds_iv              SecureString
+/autohub/creds_key             SecureString
+/autohub/domain                String
+/autohub/gemini_api_key        SecureString
+/autohub/gemini_model          String
+/autohub/jwt_refresh_secret    SecureString
+/autohub/jwt_secret            SecureString
+/autohub/meili_master_key      SecureString</code></pre>
+<figure><img data-shot src="img/e13-parameter-store.png" alt="Parameter Store console listing /autohub parameters with values hidden"><figcaption>Values are never shown. Note that one Gemini key was once pasted into an AI chat by mistake. It was deleted and replaced the same morning (INC-04).</figcaption></figure>

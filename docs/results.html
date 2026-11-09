@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Results, before and after · AutoHub Assistant</title>
+<link rel="icon" href="img/logo.svg"><link rel="stylesheet" href="style.css">
+</head><body>
+<header class="site"><div class="wrap">
+<a class="logo" href="index.html"><img src="img/logo.svg" alt="">AutoHub Assistant</a>
+<nav class="pages"><a href="index.html">Summary</a><a href="system.html">System & card</a><a href="infrastructure.html">Infrastructure</a><a href="baseline.html">Baseline</a><a href="well-architected.html">Well-Architected</a><a href="operations.html">Monitoring · Backup · Security</a><a href="automation.html">Automation & incident</a><a href="results.html" class="on">Results</a><a href="next.html">Next steps</a><a href="declaration.html">Declaration</a></nav></div></header>
+<main><div class="wrap">
+<p class="kicker">WS-G.8 · E-03 · E-04 · E-16</p>
+<h1>Results: before and after</h1>
+<p class="lede">The same things, measured the same way, over the same length of time. The date range is next to every number.</p>
+
+<h2>Before and after, side by side</h2>
+<div class="tablewrap"><table>
+<tr><th>Measure</th><th>Before</th><th>After</th><th>How it was measured</th></tr>
+<tr><td>Answer quality (30 labelled questions)</td><td><strong>__BASE_SCORE__</strong><br><small>first configuration, <code>gemini-2.5-flash</code>, 9 Nov __BASE_TIME__</small></td>
+<td><strong>__EVAL_SCORE__ (__EVAL_PCT__)</strong><br><small>current configuration, <code>gemini-3.5-flash</code>, 9 Nov __EVAL_TIMESTAMP__</small></td>
+<td>Same script (<code>app/eval.py</code>), same 30 questions, same system prompt. Only the model setting differs</td></tr>
+<tr><td>Real customer questions answered</td><td><strong>0 of 4</strong><br><small>9 Nov 00:33–01:01 UTC</small></td><td><strong>2 of 2</strong><br><small>9 Nov 01:06 UTC</small></td>
+<td><code>request-log.sh</code>, one line per question from the database (sample below)</td></tr>
+<tr><td>Time to detect an outage</td><td>no detection<br><small>baseline: no monitoring</small></td><td><strong>8 min 58 s</strong><br><small>INC-03, 9 Nov 01:07:05 → 01:16:03</small></td><td>Fault injection time against the alarm history</td></tr>
+<tr><td>Time to restore the database</td><td>impossible<br><small>no backups</small></td><td><strong>32 s</strong><br><small>9 Nov 00:46</small></td><td><code>ops.sh restore-verify</code> output</td></tr>
+<tr><td>Health-check response time</td><td>615 ms average<br><small>8 Nov 17:00–21:00 UTC (4 h, 48 checks)</small></td><td>621 ms average<br><small>8 Nov 21:00 – 9 Nov 01:00 UTC (4 h, 48 checks)</small></td><td>Health-check log through CloudFront. Flat by design: these changes were not about speed</td></tr>
+<tr><td>Cost (AWS)</td><td>$0.00 / day<br><small>6–7 Nov (nothing deployed)</small></td><td>$0.00 / day so far<br><small>8–9 Nov (Cost Explorer; covered by free plan)</small></td><td><code>aws ce get-cost-and-usage</code>, daily. Cost Explorer lags up to 24 h, so re-check before submitting; the $10 budget alert has not fired</td></tr>
+<tr><td>Cost (AI)</td><td>$0</td><td>$0</td><td>Gemini free tier, no billing account attached</td></tr>
+</table></div>
+
+<h2>Graph: availability and response time (8–9 Nov)</h2>
+<figure><img src="img/health-latency.svg" alt="Line chart of hourly health-check latency, flat around 610 ms with a spike in the incident hour">
+<figcaption>Every 5-minute health check from 8 Nov 16:20 to 9 Nov 01:25 UTC (110 checks, 107 passed). The only failures are the three checks during our planned outage (INC-03).
+The 3.5 s spike at 01:00 is the first check after a redeploy. Data: <code>site/data/health-hourly.csv</code>.</figcaption></figure>
+<figure><img data-shot src="img/e06-dashboard.png" alt="CloudWatch dashboard over the same period"><figcaption>The same period on the CloudWatch dashboard.</figcaption></figure>
+
+<h2 id="quality">Answer quality: the evaluation (E-04)</h2>
+<p><code>app/eval.py</code> sends 30 labelled questions to the model, with exactly the system prompt the live app uses (read from the rendered <code>librechat.yaml</code>).
+Each label lists facts that must appear (for example the stock number <code>AH-1027</code>) and phrases that must not appear (for example “you will be approved”). Scoring is automatic, with no human judgement.</p>
+__EVAL_TABLE__
+<h3>The failures, honestly</h3>
+__EVAL_FAILS__
+
+<h2>Request log sample (E-09)</h2>
+<pre><code>{"ts":"2026-11-09T00:38:16.426Z","question":"Which SUVs do you have under 1,000,000 pesos?","ok":false,"answer_chars":0,"duration_ms":367,"model":"gemini-2.5-flash","build":"f4154b6",…}
+{"ts":"2026-11-09T01:06:07.984Z","question":"Which SUVs do you have under 1,000,000 pesos?","ok":true,"answer_chars":485,"duration_ms":7616,"model":"gemini-3.5-flash","build":"f4154b6",…}
+{"ts":"2026-11-09T01:06:38.538Z","question":"I earn 25,000 pesos a month. Will I be approved for a loan on the Fortuner?","ok":true,"answer_chars":468,"duration_ms":4530,"model":"gemini-3.5-flash","build":"f4154b6",…}</code></pre>
+<p>Each line records the question asked, whether it succeeded, how long it took, which model answered and which LibreChat build was running. It is shipped to CloudWatch <code>/autohub/app</code>, stream <code>…-requests</code>, every 5 minutes.</p>
+
+<h2>Three test questions</h2>
+<p>The three hand-picked questions, including the failure, are on the <a href="system.html">system page</a>.</p>
+
+</div></main>
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
+All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
+<script>
+document.querySelectorAll('img[data-shot]').forEach(function(img){
+  img.addEventListener('error',function(){
+    var d=document.createElement('div');d.className='shot-missing';
+    d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
+    img.replaceWith(d);});
+});
+</script>
+</body></html>

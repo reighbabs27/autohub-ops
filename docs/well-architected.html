@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Well-Architected review · AutoHub Assistant</title>
+<link rel="icon" href="img/logo.svg"><link rel="stylesheet" href="style.css">
+</head><body>
+<header class="site"><div class="wrap">
+<a class="logo" href="index.html"><img src="img/logo.svg" alt="">AutoHub Assistant</a>
+<nav class="pages"><a href="index.html">Summary</a><a href="system.html">System & card</a><a href="infrastructure.html">Infrastructure</a><a href="baseline.html">Baseline</a><a href="well-architected.html" class="on">Well-Architected</a><a href="operations.html">Monitoring · Backup · Security</a><a href="automation.html">Automation & incident</a><a href="results.html">Results</a><a href="next.html">Next steps</a><a href="declaration.html">Declaration</a></nav></div></header>
+<main><div class="wrap">
+<p class="kicker">WS-A.6 · WS-G.5 · E-17</p>
+<h1>Well-Architected review</h1>
+<p class="lede">Two passes against the six pillars of the
+<a href="https://docs.aws.amazon.com/wellarchitected/latest/framework/the-pillars-of-the-framework.html">AWS Well-Architected Framework</a>.
+The first pass is on the first working deployment (8 Nov, before monitoring). The second is after the incident work (9 Nov).</p>
+
+<div class="tablewrap"><table>
+<tr><th style="width:15%">Pillar</th><th style="width:22%">What the framework asks</th><th>What AutoHub does now</th><th style="width:11%">Pass 1<br>8 Nov</th><th style="width:11%">Pass 2<br>9 Nov</th></tr>
+<tr><td><strong>Operational Excellence</strong></td><td>Run and monitor the workload, automate changes, learn from failures</td>
+<td>The whole deployment is 4 scripts plus <code>ops.sh</code> in Git. Two scheduled automations (health check, backup). Redeploy is one command.
+Three incidents written up with root causes and prevention, plus a runbook.</td>
+<td><span class="verdict v-adequate">adequate</span></td><td><span class="verdict v-good">good</span></td></tr>
+<tr><td><strong>Security</strong></td><td>MFA, least privilege, no secrets in code, audit trail, data protection</td>
+<td>Secrets in Parameter Store (SecureString). The instance role is limited to its own parameters and bucket paths. No SSH, no open ports except 3080 from CloudFront.
+EBS and S3 are encrypted, CloudTrail is on, and sign-ups are closed. Weak spots: console sign-in is a federated full-access role, not least-privilege IAM users, and the CloudFront-to-EC2 hop is plain HTTP.</td>
+<td><span class="verdict v-adequate">adequate</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
+<tr><td><strong>Reliability</strong></td><td>Detect failure, recover automatically, test recovery</td>
+<td>The health check through the public URL alarms within about 10 minutes. Backups run every 6 hours, and a restore was tested (32 s). Docker restarts crashed containers.
+But it is a single instance in one Availability Zone with no automatic replacement.</td>
+<td><span class="verdict v-gap">gap</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
+<tr><td><strong>Performance Efficiency</strong></td><td>Right-size resources, measure performance</td>
+<td>Measured: health-check latency about 615 ms average through CloudFront, and __EVAL_TIME__ mean answer time from the model (30-question evaluation).
+The t3.small (2 GB) fits once the unused RAG and admin containers are disabled and 2 GB of swap is added. Memory is watched by an alarm.</td>
+<td><span class="verdict v-adequate">adequate</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
+<tr><td><strong>Cost Optimization</strong></td><td>Pay only for what you use, tag everything, budget alerts</td>
+<td>Every resource is tagged <code>Project=SAM10, Team=autohub</code>. A $10 budget alert. Free-tier-eligible instance, free CloudFront TLS, free-tier model.
+Cost Explorer shows $0.00/day so far. The 8-day backup expiry and 14-day log retention stop storage growing.</td>
+<td><span class="verdict v-good">good</span></td><td><span class="verdict v-good">good</span></td></tr>
+<tr><td><strong>Sustainability</strong></td><td>Smallest footprint that does the job, no idle waste</td>
+<td>The smallest instance that runs the stack, with unused containers removed. Logs and backups expire automatically.
+The instance still runs 24/7 even when nobody uses it.</td>
+<td><span class="verdict v-adequate">adequate</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
+</table></div>
+
+<h2>What changed between the passes</h2>
+<ul>
+<li><strong>Reliability, gap → adequate:</strong> after pass 1 we added the health check, the alarms and the tested restore. We also proved detection with a planned outage: alarm after 9 minutes.</li>
+<li><strong>Operational Excellence, adequate → good:</strong> incidents INC-01 to INC-04 were found and fixed. Each fix went into the scripts, so a rebuild cannot reintroduce it.</li>
+</ul>
+
+<h2>Which pillar we optimised for, and which we accepted as weaker</h2>
+<p><strong>Optimised:</strong> Cost Optimization and Operational Excellence. This is a single-dealership demo on a student account,
+so the job was to run it cheaply and run it well.</p>
+<p><strong>Deliberately weaker:</strong> Reliability through redundancy. A second instance, a load balancer and a managed database would roughly
+triple the cost for a system with a handful of users. We chose fast detection plus a tested restore instead of high availability.</p>
+
+<h2>The one gap we would fix first</h2>
+<p class="note"><strong>Security: console access.</strong> The account is operated through one federated full-access role, so there is no separate least-privilege
+identity per person and MFA cannot be shown per IAM user. We would fix this first because it is the control that protects everything else.
+The fix is IAM Identity Center with a permission set for operations, MFA enforced, and full admin only through a role switch.
+It costs nothing and takes under an hour.</p>
+
+</div></main>
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
+All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
+<script>
+document.querySelectorAll('img[data-shot]').forEach(function(img){
+  img.addEventListener('error',function(){
+    var d=document.createElement('div');d.className='shot-missing';
+    d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
+    img.replaceWith(d);});
+});
+</script>
+</body></html>

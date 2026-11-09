@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Baseline · AutoHub Assistant</title>
+<link rel="icon" href="img/logo.svg"><link rel="stylesheet" href="style.css">
+</head><body>
+<header class="site"><div class="wrap">
+<a class="logo" href="index.html"><img src="img/logo.svg" alt="">AutoHub Assistant</a>
+<nav class="pages"><a href="index.html">Summary</a><a href="system.html">System & card</a><a href="infrastructure.html">Infrastructure</a><a href="baseline.html" class="on">Baseline</a><a href="well-architected.html">Well-Architected</a><a href="operations.html">Monitoring · Backup · Security</a><a href="automation.html">Automation & incident</a><a href="results.html">Results</a><a href="next.html">Next steps</a><a href="declaration.html">Declaration</a></nav></div></header>
+<main><div class="wrap">
+<p class="kicker">WS-G.4 · before we touched it</p>
+<h1>Baseline: the environment before our changes</h1>
+<p class="lede">The starting point is stock LibreChat as its own instructions deploy it: clone the repository, copy <code>.env.example</code>
+to <code>.env</code>, run <code>docker compose up</code>. This page lists what that gives you, so the improvements on the other pages have something to be measured against.</p>
+
+<div class="tablewrap"><table>
+<tr><th>Area</th><th>Stock LibreChat defaults (baseline)</th><th>Why that is a problem for a dealership help desk</th></tr>
+<tr><td>Identity</td><td>Title “LibreChat”, LibreChat logo, model picker showing every provider, presets, agents, parameters</td><td>Customers see a generic AI tool and can switch models or prompts</td></tr>
+<tr><td>Content</td><td>None: the model answers from its general training</td><td>It would invent cars, prices and policies</td></tr>
+<tr><td>Access</td><td><code>http://localhost:3080</code>, no HTTPS</td><td>Passwords and chats would travel unencrypted on a public server</td></tr>
+<tr><td>Sign-ups</td><td><code>ALLOW_REGISTRATION=true</code></td><td>Anyone on the internet can create an account and spend the AI quota</td></tr>
+<tr><td>Secrets</td><td><code>.env.example</code> ships fixed sample values for <code>CREDS_KEY</code>, <code>CREDS_IV</code>, <code>JWT_SECRET</code>, <code>JWT_REFRESH_SECRET</code>. The AI key is pasted into <code>.env</code> on disk</td><td>Anyone who knows the public sample values can forge login tokens. The key sits in a plain file</td></tr>
+<tr><td>Containers</td><td>api, MongoDB, Meilisearch, vector DB, RAG API, and in the latest version an admin panel</td><td>Needs about 4 GB of RAM. The admin panel crash-loops without its own secret</td></tr>
+<tr><td>Monitoring</td><td>None: container logs only, no alarms, no metrics</td><td>An outage is noticed only when a customer complains</td></tr>
+<tr><td>Backups</td><td>None: MongoDB data lives in a local folder</td><td>Losing the disk loses every user and conversation</td></tr>
+<tr><td>Automation</td><td>None</td><td>Every check and backup depends on someone remembering</td></tr>
+<tr><td>Audit / cost</td><td>Nothing in place</td><td>No record of who changed what, and no warning before a bill</td></tr>
+</table></div>
+
+<h2>Baseline numbers</h2>
+<div class="tablewrap"><table>
+<tr><th>Measure</th><th>Baseline value</th><th>How measured</th></tr>
+<tr><td>Answer quality on our 30 labelled questions</td><td><strong>0 / 30</strong></td><td><code>app/eval.py</code> against the first deployed configuration (model <code>gemini-2.5-flash</code>), 9 Nov 2026. Every request was refused by the provider. See <a href="results.html">Results</a></td></tr>
+<tr><td>Time to detect an outage</td><td>Unbounded: no monitoring</td><td>No health check or alarm existed</td></tr>
+<tr><td>Backups / restore tested</td><td>0 / no</td><td>No backup job existed</td></tr>
+<tr><td>Secrets outside Parameter Store</td><td>5 secrets in a plain <code>.env</code> file, 4 of them public sample values</td><td>Inspection of LibreChat's <code>.env.example</code></td></tr>
+<tr><td>Cost</td><td>$0.00 / day (nothing deployed)</td><td>AWS Cost Explorer, 6–7 Nov 2026</td></tr>
+</table></div>
+<p class="note">We never ran the stock defaults on the public server. The deployment script replaced them from the first boot, so the security
+rows describe what the defaults <em>would</em> have exposed, checked against LibreChat's published <code>.env.example</code>.
+The quality baseline is a real measurement.</p>
+
+</div></main>
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
+All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
+<script>
+document.querySelectorAll('img[data-shot]').forEach(function(img){
+  img.addEventListener('error',function(){
+    var d=document.createElement('div');d.className='shot-missing';
+    d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
+    img.replaceWith(d);});
+});
+</script>
+</body></html>

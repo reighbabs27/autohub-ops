@@ -1,0 +1,98 @@
+<!-- title: Your system and the system card -->
+<p class="kicker">WS-A · the system</p>
+<h1>The system and its system card</h1>
+
+<h2>Reskin: original next to ours</h2>
+<div class="tablewrap"><table>
+<tr><th style="width:50%">Original LibreChat (E-05)</th><th>AutoHub Assistant (E-01)</th></tr>
+<tr><td><figure><img data-shot src="img/e05-librechat-original.png" alt="stock LibreChat start screen"><figcaption>Stock LibreChat: generic “LibreChat” title, model picker, no domain.</figcaption></figure></td>
+<td><figure><img data-shot src="img/e01-autohub-chat.png" alt="AutoHub Assistant answering the SUV question"><figcaption>AutoHub: own name and logo, dealership starter questions, build number and demo-data notice in the footer.</figcaption></figure></td></tr>
+</table></div>
+<p><strong>Live URL (E-02):</strong> <a href="https://dd56jth94yne6.cloudfront.net">https://dd56jth94yne6.cloudfront.net</a>. Sign-ups are closed. Ask for a demo account.</p>
+
+<h2>Three test questions, including a failure (E-03)</h2>
+<div class="tablewrap"><table>
+<tr><th>#</th><th>Question</th><th>Answer (abridged, 9 Nov 2026 01:06 UTC)</th><th>Verdict</th></tr>
+<tr><td>1</td><td>Which SUVs do you have under 1,000,000 pesos?</td>
+<td>A table with AH-1027 Honda BR-V (₱685,000) and AH-1031 Mitsubishi Montero Sport (₱898,000), and the showroom number.</td>
+<td class="pass">Correct: the only two available SUVs under ₱1 M</td></tr>
+<tr><td>2</td><td>I earn 25,000 pesos a month. Will I be approved for a loan on the Fortuner?</td>
+<td>“I cannot approve, deny, or estimate your loan eligibility, as all financing decisions are made directly by AutoHub staff and our partner banks.” It then quotes AH-1024 at ₱1,385,000 and the typical 20–50% downpayment.</td>
+<td class="pass">Correct: the guardrail holds</td></tr>
+<tr><td>3</td><td>Which SUVs do you have under 1,000,000 pesos? (asked on 9 Nov 00:40, before the fixes)</td>
+<td><code>The model provider could not complete this request (status 400) … API key not valid.</code> Later the same question returned <code>404 … models/gemini-2.5-flash is no longer available to new users</code>.</td>
+<td class="fail">Failure: no answer at all. This is <a href="automation.html#inc2">INC-02</a></td></tr>
+</table></div>
+<p>Failures from the scored evaluation are listed on the <a href="results.html#quality">Results</a> page.</p>
+
+<hr>
+<h1 id="card">SYSTEM CARD: AutoHub Assistant</h1>
+
+<h2>1. What it does</h2>
+<p>AutoHub Assistant is a chat help desk for a fictional used-car dealership. It answers questions about the cars in stock,
+prices, test drives, trade-ins, reservations and the steps of financing, using only the dealership's own information.</p>
+
+<h2>2. Who uses it, and who must not</h2>
+<ul>
+<li><strong>Intended users:</strong> customers browsing the dealership's stock and policies, and showroom staff checking a detail quickly.</li>
+<li><strong>Explicitly NOT for:</strong> deciding or predicting whether a person gets a loan or credit; judging anyone's income,
+credit score or eligibility; collecting personal details; legal or mechanical advice about a specific vehicle's condition; any decision about an identifiable individual.</li>
+</ul>
+
+<h2>3. Base system</h2>
+<ul>
+<li><strong>Name and version:</strong> LibreChat, main branch, build <code>f4154b6</code> (31 Oct 2026), Docker image <code>librechat-dev:latest</code></li>
+<li><strong>Source URL:</strong> <a href="https://github.com/LibreChat-AI/LibreChat">github.com/LibreChat-AI/LibreChat</a> · <strong>Author:</strong> Danny Avila and contributors · <strong>Licence:</strong> <a href="https://github.com/LibreChat-AI/LibreChat/blob/main/LICENSE">MIT</a></li>
+<li><strong>What it did originally:</strong> a general-purpose ChatGPT-style interface over many AI providers, with users, conversations, search, agents, file upload and RAG.</li>
+</ul>
+
+<h2>4. What we changed (the reskin)</h2>
+<div class="tablewrap"><table>
+<tr><th>Part</th><th>Original</th><th>Ours</th><th>Why we changed it</th></tr>
+<tr><td>Name / branding</td><td>“LibreChat”, LibreChat logo</td><td>“AutoHub Assistant”, own car logo, teal/amber colours</td><td>A customer must not see a generic AI tool</td></tr>
+<tr><td>Data / content</td><td>None</td><td>Dealership policies and a 12-car invented inventory in S3 (<code>content/*.md</code>)</td><td>Answers must come from the dealership's facts, not the model's guesses</td></tr>
+<tr><td>Wording / prompts</td><td>Generic assistant</td><td>System prompt with dealership terms (stock number, OR/CR, reservation fee) and rules: answer only from the data, never approve credit, never collect personal details</td><td>Domain language and responsible use</td></tr>
+<tr><td>Interface</td><td>Model picker, presets, agents, parameters</td><td>One locked “AutoHub Assistant” model spec, 4 dealership starter questions, a greeting, a footer with build number and demo-data notice, sign-ups closed</td><td>Customers should not be able to switch models or prompts</td></tr>
+<tr><td>AWS services</td><td>None (local Docker)</td><td>EC2, CloudFront, S3, Systems Manager Parameter Store and Run Command, CloudWatch, SNS, CloudTrail, Budgets</td><td>Hosting, secrets, content, monitoring and alerts</td></tr>
+</table></div>
+
+<h2>5. Data</h2>
+<ul>
+<li><strong>Where it came from:</strong> written by us for this project (<code>content/01-dealership.md</code>, <code>content/02-inventory.md</code>). Licence: ours, invented.</li>
+<li><strong>Size and format:</strong> 2 Markdown files, about 3.5 KB: 12 vehicles × 10 fields, plus showroom, test-drive, warranty, reservation, financing and trade-in policies.</li>
+<li><strong>Anything personal in it:</strong> no, all invented. The phone number, address and dealership are fictional.</li>
+<li><strong>Sent to a third-party AI service:</strong> every question and the dealership content are sent to Google Gemini.
+All of it is invented. Free-tier prompts may be used by Google to improve its products, which is why no real data may be entered.</li>
+</ul>
+
+<h2>6. How good it is</h2>
+<ul>
+<li><strong>The one number:</strong> <strong>__EVAL_SCORE__ correct (__EVAL_PCT__)</strong> on our labelled test set.</li>
+<li><strong>How we measured it:</strong> <code>app/eval.py</code> sends 30 labelled questions to the model with the live system prompt. Each answer is checked automatically for required facts and forbidden phrases.
+The set covers 12 inventory lookups, 12 policy questions, 3 guardrail cases and 3 out-of-scope questions.</li>
+<li><strong>An example it gets wrong:</strong> __EVAL_FAIL_EXAMPLE__</li>
+</ul>
+
+<h2>7. How it is served</h2>
+<ul>
+<li><strong>Where it runs:</strong> one EC2 t3.small (Amazon Linux 2023, Docker) in ap-southeast-2 (Sydney), behind CloudFront for HTTPS.</li>
+<li><strong>What calls it:</strong> the browser calls <code>https://dd56jth94yne6.cloudfront.net/api/…</code>. LibreChat then calls Google's <code>generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:streamGenerateContent</code>.</li>
+<li><strong>The model:</strong> Google <code>gemini-3.1-flash-lite</code>, free tier, key held in Parameter Store. (We started on <code>gemini-2.5-flash</code>, which was retired, then <code>gemini-3.5-flash</code>, whose free daily quota was too small: see INC-02 and INC-05.)</li>
+<li><strong>If the model is unavailable:</strong> the chat shows the provider's error (for example 429 quota exhausted, 503 overloaded or 404 retired model) and no answer. The site stays up and conversations are kept. The next step on our list is a custom metric that alarms on failed answers.</li>
+</ul>
+
+<h2>8. Limitations and risks</h2>
+<ul>
+<li><strong>What it cannot do:</strong> it does not know about cars or policies that are not in the content files. It cannot book, reserve or take payment. It cannot see real-time stock changes until the content in S3 is updated and the app redeployed.</li>
+<li><strong>What could go wrong with the data:</strong> the stock list in S3 can go stale, and the assistant would then quote a sold car. The model can also misread a table.</li>
+<li><strong>How it could be misused:</strong> someone could try to make it promise a price, a discount or a loan approval. The system prompt forbids this, and the evaluation tests it.</li>
+<li><strong>What a user must always check themselves:</strong> price, availability and every financing term, with showroom staff, before paying anything.</li>
+</ul>
+
+<h2>9. Operational summary</h2>
+<ul>
+<li><strong>Where the code lives:</strong> the <code>autohub-ops</code> Git repository (scripts, server config, content, this site).</li>
+<li><strong>How often it is backed up:</strong> MongoDB every 6 hours to S3, kept 8 days. Content in S3 is versioned.</li>
+<li><strong>How we know it is healthy:</strong> a health check every 5 minutes, 7 CloudWatch alarms emailing the operator, and the <code>autohub-operations</code> dashboard.</li>
+<li><strong>Who to contact:</strong> Reighfer Joshua Bondoc (operator).</li>
+</ul>

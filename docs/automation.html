@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Automation and the incident · AutoHub Assistant</title>
+<link rel="icon" href="img/logo.svg"><link rel="stylesheet" href="style.css">
+</head><body>
+<header class="site"><div class="wrap">
+<a class="logo" href="index.html"><img src="img/logo.svg" alt="">AutoHub Assistant</a>
+<nav class="pages"><a href="index.html">Summary</a><a href="system.html">System & card</a><a href="infrastructure.html">Infrastructure</a><a href="baseline.html">Baseline</a><a href="well-architected.html">Well-Architected</a><a href="operations.html">Monitoring · Backup · Security</a><a href="automation.html" class="on">Automation & incident</a><a href="results.html">Results</a><a href="next.html">Next steps</a><a href="declaration.html">Declaration</a></nav></div></header>
+<main><div class="wrap">
+<p class="kicker">WS-E · WS-F · E-14 · E-15</p>
+<h1>Automation, incidents and the runbook</h1>
+
+<h2>Two automations, running unattended (WS-E)</h2>
+<div class="tablewrap"><table>
+<tr><th>Automation</th><th>What it does</th><th>Schedule</th><th>Code</th></tr>
+<tr><td><strong>Health check</strong></td><td>Calls <code>/health</code> on the server and through CloudFront over HTTPS. Publishes <code>HealthCheckOK</code> and <code>HealthCheckLatencyMs</code> to CloudWatch, which drive two alarms, and writes a log line</td>
+<td>every 5 min, systemd timer <code>autohub-health.timer</code></td><td><code>app/healthcheck.sh</code></td></tr>
+<tr><td><strong>Database backup</strong></td><td><code>mongodump</code> of the LibreChat database, gzipped to S3 <code>backups/mongo/</code>. Publishes <code>BackupSucceeded</code>, which raises an alarm if a backup is missed</td>
+<td>00:00, 06:00, 12:00, 18:00 UTC, systemd timer <code>autohub-backup.timer</code></td><td><code>app/backup-mongo.sh</code></td></tr>
+</table></div>
+<p>Both were installed by the EC2 bootstrap on 8 Nov 2026 at 16:15 UTC and have run without anybody touching them since. The timestamps come from the logs:</p>
+<pre><code>$ systemctl list-timers 'autohub-*'
+NEXT                        LEFT          LAST                        PASSED    UNIT
+Mon 2026-11-09 00:40:00 UTC 4min 17s left Mon 2026-11-09 00:35:00 UTC 42s ago   autohub-health.timer
+Mon 2026-11-09 06:00:00 UTC 5h 24min left Mon 2026-11-09 00:00:00 UTC 35min ago autohub-backup.timer
+
+health check: 110 runs between 2026-11-08T16:15Z and 2026-11-09T01:25Z, for example
+2026-11-09T00:25:03+00:00 health ok=1 local_http=200 public_http=200 latency_ms=714
+2026-11-09T00:30:04+00:00 health ok=1 local_http=200 public_http=200 latency_ms=638
+2026-11-09T00:35:02+00:00 health ok=1 local_http=200 public_http=200 latency_ms=567
+
+backups (scheduled runs):
+2026-11-08T18:00  backup OK  s3://…/backups/mongo/LibreChat-20261108T180000Z.archive.gz
+2026-11-09T00:00:04+00:00 backup OK s3://…/backups/mongo/LibreChat-20261109T000000Z.archive.gz size=11030B</code></pre>
+<figure><img data-shot src="img/e14-automation-log.png" alt="CloudWatch Logs /autohub/automation showing scheduled health and backup lines"><figcaption>The same lines in CloudWatch Logs <code>/autohub/automation</code>.</figcaption></figure>
+<p><strong>Repository:</strong> all automation code is in the <code>autohub-ops</code> Git repository, with a README that explains how to deploy it.
+<code>./ops.sh redeploy</code> pushes changes from the repository to the running server.</p>
+
+<h2>The incidents (WS-F)</h2>
+<p>We had four real incidents. <strong>INC-01 is our main write-up</strong>, with timings and a runbook. The others are shorter.</p>
+
+<h3 id="inc1">INC-01: the app silently ignored its configuration</h3>
+<div class="tablewrap"><table>
+<tr><th>Started</th><td>8 Nov 2026 16:12 UTC (first deploy)</td><th>Noticed</th><td>16:18 UTC: the login page said “LibreChat”, with no sign-up link</td></tr>
+<tr><th>Fixed</th><td>16:24 UTC (redeploy verified)</td><th>Time to detect / fix</th><td>about 6 min / about 6 min</td></tr>
+</table></div>
+<p><strong>Symptom.</strong> The site loaded over HTTPS, but as stock LibreChat. <code>/api/config</code> returned
+<code>"appTitle":"LibreChat"</code>, <code>"serverDomain":"http://localhost:3080"</code> and <code>"registrationEnabled":false</code>,
+even though we had set all three. Separately, the <code>chat-meilisearch</code> container was in a restart loop.</p>
+<p><strong>Investigation (E-15).</strong></p>
+<pre><code>$ grep -E "^(APP_TITLE|DOMAIN_CLIENT|ALLOW_REGISTRATION)=" /opt/autohub/LibreChat/.env
+DOMAIN_CLIENT=https://dd56jth94yne6.cloudfront.net
+APP_TITLE=AutoHub Assistant
+ALLOW_REGISTRATION=true                      &lt;- the file on the host is correct
+$ docker exec LibreChat printenv APP_TITLE ALLOW_REGISTRATION
+                                             &lt;- …but the container sees nothing
+$ grep -A3 "source: ./.env" docker-compose.yml
+        source: ./.env
+        target: /app/.env                    &lt;- .env is bind-mounted, and the app runs as user "${UID}:${GID}" = 1000
+$ docker logs --tail 2 chat-meilisearch
+Error: Permission denied (os error 13)       &lt;- same pattern: meili_data_v1.35.1 owned by root</code></pre>
+<p><strong>Root cause.</strong> Our <code>start-autohub.sh</code> ran as root and wrote <code>.env</code> with <code>install -m 600</code>, so the file was owned by root and readable only by root.
+The LibreChat container runs as uid 1000 and reads <code>/app/.env</code> through a bind mount. It could not read the file and silently fell back to its defaults.
+For the same reason Docker created Meilisearch's data folder as root, and the search service, also running as uid 1000, crashed on every start.</p>
+<p><strong>Fix and prevention.</strong> <code>start-autohub.sh</code> now writes <code>install -m 600 -o 1000 -g 1000 .env.new .env</code>,
+so the file is still private but owned by the app's user. It also pre-creates and <code>chown</code>s the Meilisearch data folder (its name is read from the compose file, so a LibreChat upgrade cannot break it).
+Because the fix is in the deploy script, every redeploy and every rebuild applies it.</p>
+<p><strong>Evidence it worked.</strong></p>
+<pre><code>$ curl -s https://dd56jth94yne6.cloudfront.net/api/config
+{"appTitle":"AutoHub Assistant", … "serverDomain":"https://dd56jth94yne6.cloudfront.net", … "registrationEnabled":true, …}
+$ docker ps --format "{{.Names}} {{.Status}}"
+LibreChat Up About a minute · chat-mongodb Up 3 minutes · chat-meilisearch Up 15 seconds
+chat-meilisearch  INFO actix_server::server: starting service: "actix-web-service-0.0.0.0:7700"</code></pre>
+<p>Every redeploy since then has come up with the AutoHub title and a healthy search container (<code>/autohub/deploy</code> log).</p>
+
+<h3 id="inc2">INC-02: the assistant could not answer (bad key, then a retired model)</h3>
+<p><strong>Symptom:</strong> every chat showed <code>400 API key not valid</code>. <strong>Cause 1:</strong> the stored key was 4 characters long, a mistyped value at the hidden prompt.
+A second attempt stored 106 characters, because the key was pasted twice and the hidden input showed nothing.
+<strong>Fix 1:</strong> the key prompt now strips whitespace and calls Google's <code>models</code> endpoint before saving, and only HTTP 200 is stored.
+<strong>Cause 2:</strong> with a valid key, <code>404 models/gemini-2.5-flash is no longer available to new users</code>. Google retired the model we had configured.
+<strong>Fix 2:</strong> we listed the models the key can use, tested <code>gemini-3.5-flash</code> (HTTP 200), set <code>/autohub/gemini_model</code> and redeployed.
+<strong>Lesson:</strong> a deployment that has not changed can still break when the provider changes, so validate secrets on entry and test the model name.</p>
+
+<h3 id="inc3">INC-03: planned outage to prove the monitoring</h3>
+<p>Fault injected 9 Nov 01:07:05 UTC (<code>docker compose stop api</code>). Health check failed at 01:10 and 01:15, with CloudFront returning 504.
+Alarm at 01:16:03, then email. Recovered at 01:20:45 with <code>./ops.sh redeploy</code>.
+<strong>Time to detect: 8 min 58 s. Time to fix after the alarm: 4 min 42 s.</strong></p>
+
+<h3 id="inc4">INC-04: key rotation broke the assistant</h3>
+<p>A Gemini key was pasted into an AI chat by mistake. Following the brief, it was deleted at once in AI Studio. It was the key AutoHub was using, so
+answers failed with <code>401 API key not valid</code>. Our evaluation run found this at about 01:28 UTC, 9 Nov.
+A new key was created and saved through the validating prompt at 01:33:48, and AutoHub was redeployed at 01:34:02.
+<strong>Prevention:</strong> rotation is now a runbook step (below), so the new key is stored <em>before</em> the old one is deleted.
+<strong>Gap:</strong> the health check did not catch this, because <code>/health</code> does not call the model. A failed-answer metric is first on <a href="next.html">Next steps</a>.</p>
+
+<h2 id="runbook">Runbook: rotate or replace the Gemini API key</h2>
+<pre>RUNBOOK: Rotate / replace the Gemini API key
+Owner: Reighfer Joshua Bondoc   Last tested: 2026-11-09 (INC-04)   Takes: 5 minutes   Ask: Reighfer
+
+1. WHAT THIS IS FOR
+   Put a new Google Gemini API key into AutoHub without downtime, e.g. after a key leaked or Google rejected it.
+
+2. HOW YOU KNOW YOU NEED IT
+   Chats show "The model provider could not complete this request (status 400/401) … API key not valid",
+   or a key was exposed anywhere (chat, screenshot, Git). Command that shows the problem (AWS CloudShell):
+     cd ~/autohub-ops && source ./config.env
+     K=$(aws ssm get-parameter --name /autohub/gemini_api_key --with-decryption --query Parameter.Value --output text)
+     curl -s -o /dev/null -w '%{http_code}\n' -H "x-goog-api-key: $K" https://generativelanguage.googleapis.com/v1beta/models; unset K
+   -> anything other than 200 means the stored key is bad.
+
+3. WHAT IT AFFECTS
+   Every customer: the site loads and logins work, but every question returns an error. Stored chats are safe.
+
+4. HOW TO DO IT
+   Step 1: aistudio.google.com > API keys > Create API key. Copy it. Do NOT delete the old key yet.
+   Step 2: in CloudShell run the validating prompt (from the README, "Replace the Gemini key"),
+           paste the key ONCE, press Enter        -> you should see "Google accepted the key … KEY SAVED"
+   Step 3: it runs ./ops.sh redeploy by itself   -> you should see "[deploy] deployed build …" and "status: Success"
+   Step 4: only now delete the old key in AI Studio.
+
+5. HOW TO CHECK IT WORKED
+   - [ ] the curl in step 2 of "How you know" prints 200
+   - [ ] ask "Which SUVs do you have under 1,000,000 pesos?" and get AH-1027 and AH-1031
+   - [ ] no new alarms for 10 minutes
+
+6. HOW TO UNDO IT
+   If the new key misbehaves and the old one is not deleted yet, run the prompt again with the old key.
+   Parameter Store keeps history: aws ssm get-parameter-history --name /autohub/gemini_api_key
+
+7. GOTCHAS
+   - The prompt is hidden: paste once. A double paste gives a key twice as long (INC-02).
+   - New AI Studio keys start with "AQ." and are ~53 characters, not "AIza…".
+   - Deleting the old key BEFORE saving the new one takes the assistant down (INC-04).
+   - Never paste a key into a chat, a ticket or a screenshot. If you do, rotate it with this runbook.
+
+8. CHANGE HISTORY
+   2026-11-09 - written after INC-02/INC-04; added "save new key before deleting old".
+</pre>
+
+</div></main>
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
+All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
+<script>
+document.querySelectorAll('img[data-shot]').forEach(function(img){
+  img.addEventListener('error',function(){
+    var d=document.createElement('div');d.className='shot-missing';
+    d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
+    img.replaceWith(d);});
+});
+</script>
+</body></html>

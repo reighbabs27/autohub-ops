@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" font-family="Inter,Segoe UI,sans-serif" role="img" aria-label="Health check latency per hour">
+<style>.ax{stroke:#c9d2d7}.lb{font-size:12px;fill:#56656f}.ttl{font-size:14px;font-weight:700;fill:#16222a}@media (prefers-color-scheme:dark){.ttl{fill:#e6ecef}.lb{fill:#9fb0b9}.ax{stroke:#2d3a41}}</style>
+<rect x="0" y="0" width="880" height="300" fill="none"/>
+<line class="ax" x1="60" x2="860" y1="240.0" y2="240.0"/><text class="lb" x="52" y="244.0" text-anchor="end">0</text>
+<line class="ax" x1="60" x2="860" y1="187.5" y2="187.5"/><text class="lb" x="52" y="191.5" text-anchor="end">1000</text>
+<line class="ax" x1="60" x2="860" y1="135.0" y2="135.0"/><text class="lb" x="52" y="139.0" text-anchor="end">2000</text>
+<line class="ax" x1="60" x2="860" y1="82.5" y2="82.5"/><text class="lb" x="52" y="86.5" text-anchor="end">3000</text>
+<line class="ax" x1="60" x2="860" y1="30.0" y2="30.0"/><text class="lb" x="52" y="34.0" text-anchor="end">4000</text>
+<line x1="60" x2="860" y1="82.5" y2="82.5" stroke="#b23b30" stroke-dasharray="5 4"/><text class="lb" x="860" y="76.5" text-anchor="end" style="fill:#b23b30">alarm threshold 3 s</text>
+<rect x="820.0" y="30" width="50.0" height="210" fill="#e0902f" opacity=".15"/><text class="lb" x="816.0" y="44" text-anchor="end">01:07–01:20 planned outage (INC-03),</text><text class="lb" x="816.0" y="59" text-anchor="end">01:00 redeploy for INC-02</text>
+<polyline points="60.0,202.8 148.9,201.8 237.8,199.0 326.7,205.1 415.6,202.8 504.4,201.9 593.3,198.9 682.2,202.5 771.1,202.5 860.0,52.6" fill="none" stroke="#7a8a93" stroke-width="1.5" stroke-dasharray="3 3"/>
+<polyline points="60.0,208.0 148.9,208.1 237.8,207.1 326.7,207.7 415.6,207.9 504.4,207.4 593.3,206.9 682.2,207.1 771.1,208.2 860.0,174.1" fill="none" stroke="#0f3d3e" stroke-width="2.5"/>
+<circle cx="60.0" cy="208.0" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="60.0" y="258" text-anchor="middle">16:00</text>
+<text class="lb" x="60.0" y="274" text-anchor="middle">8/8 ok</text>
+<circle cx="148.9" cy="208.1" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="148.9" y="258" text-anchor="middle">17:00</text>
+<text class="lb" x="148.9" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="237.8" cy="207.1" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="237.8" y="258" text-anchor="middle">18:00</text>
+<text class="lb" x="237.8" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="326.7" cy="207.7" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="326.7" y="258" text-anchor="middle">19:00</text>
+<text class="lb" x="326.7" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="415.6" cy="207.9" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="415.6" y="258" text-anchor="middle">20:00</text>
+<text class="lb" x="415.6" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="504.4" cy="207.4" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="504.4" y="258" text-anchor="middle">21:00</text>
+<text class="lb" x="504.4" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="593.3" cy="206.9" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="593.3" y="258" text-anchor="middle">22:00</text>
+<text class="lb" x="593.3" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="682.2" cy="207.1" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="682.2" y="258" text-anchor="middle">23:00</text>
+<text class="lb" x="682.2" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="771.1" cy="208.2" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="771.1" y="258" text-anchor="middle">00:00</text>
+<text class="lb" x="771.1" y="274" text-anchor="middle">12/12 ok</text>
+<circle cx="860.0" cy="174.1" r="3.5" fill="#0f3d3e"/>
+<text class="lb" x="860.0" y="258" text-anchor="middle">01:00</text>
+<text class="lb" x="860.0" y="274" text-anchor="middle">3/6 ok</text>
+<text class="lb" x="60" y="294">UTC hour, 8 → 9 Nov 2026 · solid: average ms · dashed grey: worst check in the hour</text>
+<text class="ttl" x="60" y="18">Health-check response time through CloudFront (ms)</text></svg>

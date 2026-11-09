@@ -1,0 +1,61 @@
+<!-- title: Executive summary -->
+<p class="kicker">SAM10 final project · executive summary</p>
+<h1>AutoHub Assistant: a used-car help desk, run properly on AWS</h1>
+<p class="lede">AutoHub Assistant answers customer questions for <strong>AutoHub Pre-Owned Motors</strong>, a made-up
+used-car dealership. Customers ask what cars are in stock, how trade-ins and financing work, and when they can test drive.
+The assistant answers only from the dealership's own information.</p>
+
+<div class="cards">
+  <div class="card"><div class="num">97.3%</div><div class="lbl">health checks passed, 107 of 110 (8 Nov 16:20 – 9 Nov 01:25 UTC). The 3 failures were our own planned outage test</div></div>
+  <div class="card"><div class="num">__EVAL_PCT__</div><div class="lbl">answer quality: __EVAL_SCORE__ labelled test questions answered correctly (scored by a script)</div></div>
+  <div class="card"><div class="num">9 min</div><div class="lbl">time to detect a real outage, and 4 min 42 s to fix it after the alarm email</div></div>
+  <div class="card"><div class="num">32 s</div><div class="lbl">to restore the whole database from backup. Counts matched exactly</div></div>
+</div>
+
+<h2>The presentation</h2>
+<div class="video"><iframe src="https://www.youtube.com/embed/VIDEO_ID" title="AutoHub Assistant presentation" allowfullscreen></iframe></div>
+<p class="note">Replace <code>VIDEO_ID</code> in <code>site/pages/index.html</code> with the YouTube ID of the recorded 5–8 minute presentation, then run <code>python3 site/build.py</code>.</p>
+
+<h2>What the system does</h2>
+<p>A customer opens <a href="https://dd56jth94yne6.cloudfront.net">https://dd56jth94yne6.cloudfront.net</a>, signs in, and types a question
+such as “Which SUVs do you have under 1,000,000 pesos?”. AutoHub Assistant replies with the matching cars from the current stock list,
+with stock numbers and prices. It will not decide whether anyone gets a loan: it explains the steps and sends the customer to staff.</p>
+<p>It is built on <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a>, an open-source chat application,
+reskinned with a new name, logo, wording, dealership content and rules. The answers come from Google's Gemini model (free tier).
+Everything else runs in one AWS account in Sydney.</p>
+
+<h2>What was wrong with how it ran, and what we changed</h2>
+<div class="tablewrap"><table>
+<tr><th>Problem we found</th><th>What we changed</th><th>Proof</th></tr>
+<tr><td>The app silently ignored its own settings (wrong name, wrong address, sign-ups off) because of a file-permission mistake.</td>
+<td>The settings file is now owned by the user the app runs as. The same fix stopped the search service from crash-looping.</td>
+<td><a href="automation.html#inc1">Incident INC-01</a></td></tr>
+<tr><td>The assistant could not answer anything: first a bad API key, then Google retired the AI model we had chosen.</td>
+<td>The key is now tested with Google before it is saved. The model was switched to one confirmed to work.</td>
+<td><a href="automation.html#inc2">Incident INC-02</a></td></tr>
+<tr><td>Our own 30-question test used up the AI model's free daily quota, so customers would have got errors.</td>
+<td>Switched to a model with its own quota within 2 minutes. Tests can now target a different model.</td>
+<td><a href="automation.html#inc5">Incident INC-05</a></td></tr>
+<tr><td>Nobody would know if the site went down.</td>
+<td>A health check runs every 5 minutes through the public HTTPS address and feeds 7 alarms that email the operator.</td>
+<td><a href="operations.html#monitoring">Real alert email</a></td></tr>
+<tr><td>Chats would be lost if the server failed.</td>
+<td>The database is backed up to S3 every 6 hours and kept for 8 days. A restore was tested.</td>
+<td><a href="operations.html#backup">Restore test</a></td></tr>
+<tr><td>Secrets could have ended up in code.</td>
+<td>All 6 secrets live in AWS Parameter Store, encrypted. No key appears in the repository.</td>
+<td><a href="operations.html#security">Security table</a></td></tr>
+</table></div>
+
+<h2>What improved</h2>
+<p>Before these changes the assistant answered <strong>0 of 30</strong> test questions, because every request failed.
+After them it answers <strong>__EVAL_SCORE__</strong>. Outages are now noticed within about 10 minutes instead of whenever a customer complains.
+The system can also be rebuilt from the repository with four scripts.
+Details and graphs are on the <a href="results.html">Results</a> page.</p>
+
+<h2>Honest limitations</h2>
+<ul>
+<li>One server in one data centre: if it fails, the site is down until it is rebuilt (about 15 minutes). We chose this to keep costs low.</li>
+<li>The assistant can still make mistakes, so customers must confirm prices and availability with staff. See the <a href="system.html">system card</a>.</li>
+<li>All data is invented. This is a teaching project, not a real dealership.</li>
+</ul>

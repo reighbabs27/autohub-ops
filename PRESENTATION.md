@@ -57,10 +57,8 @@ If you run short, cut the CloudShell part (show the S3 backups only). If you run
 
 ## 4. Screenshots only you can take
 
-These are still shown as "Screenshot to add" boxes on the website. Save them with exactly these names in `docs/img/`, then rebuild and push:
+This one is still shown as "Screenshot to add" boxes on the website. Save them with exactly these names in `docs/img/`, then rebuild and push:
 
 | File | What to capture |
 |---|---|
-| `e08-alert-email.png` | The Gmail ALARM email for `autohub-assistant-down` on 9 Nov, with the date and time visible. Crop out the inbox list. |
-| `e05-librechat-original.png` | Stock LibreChat for comparison: a screenshot of the LibreChat demo or of the README image at github.com/LibreChat-AI/LibreChat (say where it came from in the caption). |
 | `e12-mfa.png` | Your sign-in's MFA page (for example Google account → Security → 2-Step Verification "On"). Hide phone numbers. If you cannot show MFA, delete that figure from `site/pages/operations.html`, because the text already explains the federated sign-in. |

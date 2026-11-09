@@ -45,7 +45,7 @@ say "Dashboard: autohub-operations"
 DASH=$(mktemp)
 cat > "$DASH" <<EOF
 {"widgets":[
- {"type":"text","x":0,"y":0,"width":24,"height":3,"properties":{"markdown":"## AutoHub Assistant - operations\\nThresholds: CPU 85%/10 min and memory 90% leave headroom before a 4 GB t3.medium starts killing containers; disk alarms at 85% (checked every 5 min, not hourly) because chat logs and backups can fill 30 GB quickly; health check must pass through CloudFront every 5 min; answers slower than 3 s feel broken to a customer; a backup must succeed every 6 h so RPO stays under 6 h."}},
+ {"type":"text","x":0,"y":0,"width":24,"height":3,"properties":{"markdown":"## AutoHub Assistant - operations\\nThresholds: CPU 85%/10 min and memory 90% leave headroom before the 2 GB t3.small (plus 2 GB swap) starts killing containers; disk alarms at 85% (checked every 5 min, not hourly) because chat logs and backups can fill 30 GB quickly; health check must pass through CloudFront every 5 min; answers slower than 3 s feel broken to a customer; a backup must succeed every 6 h so RPO stays under 6 h."}},
  {"type":"metric","x":0,"y":3,"width":8,"height":6,"properties":{"title":"Requests (CloudFront)","region":"us-east-1","view":"timeSeries","stat":"Sum","period":300,
    "metrics":[["AWS/CloudFront","Requests","DistributionId","$DIST_ID","Region","Global"]]}},
  {"type":"metric","x":8,"y":3,"width":8,"height":6,"properties":{"title":"Error rate % (CloudFront 4xx/5xx)","region":"us-east-1","view":"timeSeries","stat":"Average","period":300,

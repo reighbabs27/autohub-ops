@@ -13,7 +13,7 @@
 
 <h2 id="monitoring">Monitoring (WS-B)</h2>
 <h3>Dashboard <code>autohub-operations</code> (E-06)</h3>
-<figure><img data-shot src="img/e06-dashboard.png" alt="CloudWatch dashboard autohub-operations with real data"><figcaption>
+<figure><img data-shot src="img/e06-dashboard.jpg" alt="CloudWatch dashboard autohub-operations with real data"><figcaption>
 Widgets: CloudFront requests; CloudFront 4xx/5xx error rate; response time from the health check through HTTPS; CPU;
 disk % and memory %; health OK and backups succeeded. The alarm status strip is at the bottom.</figcaption></figure>
 <p><strong>Why these thresholds, in one sentence (as written on the dashboard):</strong> CPU 85% for 10 minutes and memory 90% leave headroom before a small instance
@@ -32,15 +32,18 @@ A backup must succeed every 6 hours so the RPO stays under 6 hours.</p>
 <tr><td>autohub-disk-high</td><td>CWAgent disk_used_percent</td><td>&gt; 85% for 5 min</td><td>DiskSpaceUsed (we check every 5 min, not hourly)</td></tr>
 <tr><td>autohub-backup-missed</td><td>AutoHub/BackupSucceeded (sum)</td><td>&lt; 1 over 7 × 1 h; missing data counts as failing</td><td>Replaces the RDS rows (our database is a container)</td></tr>
 </table></div>
-<figure><img data-shot src="img/e07-alarms.png" alt="CloudWatch alarms list, all 7 OK"><figcaption>All seven alarms in the CloudWatch console.</figcaption></figure>
+<figure><img data-shot src="img/e07-alarms.jpg" alt="CloudWatch alarms list, all 7 OK"><figcaption>All seven alarms in the CloudWatch console, 9 Nov 2026, all back in OK after the outage test.</figcaption></figure>
 
 <h3>A real alert arrived (E-08)</h3>
 <p>On 9 Nov 2026 at <strong>01:07:05 UTC</strong> we stopped the LibreChat container on purpose. The health check failed at 01:10 and 01:15.
 The alarm went from OK to ALARM at <strong>01:16:03 UTC</strong> and SNS emailed the operator. We restored service at 01:20:45, which sent the OK email.</p>
 <pre><code>$ aws cloudwatch describe-alarm-history --alarm-name autohub-assistant-down --history-item-type StateUpdate
+2026-11-09T01:26:03                Alarm updated from ALARM to OK
 2026-11-09T01:16:03.441000+00:00   Alarm updated from OK to ALARM
 2026-11-08T16:21:03.437000+00:00   Alarm updated from ALARM to OK
 2026-11-08T16:13:03.437000+00:00   Alarm updated from INSUFFICIENT_DATA to ALARM</code></pre>
+<div class="tablewrap"><table><tr><td style="width:50%"><figure><img data-shot src="img/e08-alarm-fired.jpg" alt="autohub-assistant-down alarm graph with the red in-alarm period"><figcaption>The <code>autohub-assistant-down</code> alarm graph: HealthCheckOK drops to 0 and the red band marks the ALARM period.</figcaption></figure></td>
+<td><figure><img data-shot src="img/e08-alarm-history.jpg" alt="alarm history showing the SNS action at 01:16:03 and the return to OK at 01:26:03"><figcaption>Alarm history: OK → ALARM at 01:16:03 UTC with the SNS email action, and back to OK at 01:26:03 UTC.</figcaption></figure></td></tr></table></div>
 <figure><img data-shot src="img/e08-alert-email.png" alt="ALARM email in Gmail with date and time visible"><figcaption>The ALARM email as received, with date and time visible.</figcaption></figure>
 
 <h3>Logs and request logging (E-09)</h3>
@@ -52,7 +55,7 @@ Every health-check line records the outcome, the HTTP codes and the duration:</p
 <pre><code>2026-11-09T00:25:03+00:00 health ok=1 local_http=200 public_http=200 latency_ms=714
 2026-11-09T01:10:04+00:00 health ok=0 local_http=000 public_http=504 latency_ms=1138   &lt;- planned outage
 2026-11-09T01:05:32+00:00 [deploy] deployed build f4154b6</code></pre>
-<figure><img data-shot src="img/e09-request-log.png" alt="CloudWatch Logs /autohub/app showing a request entry"><figcaption>A sample request from <code>/autohub/app</code>.</figcaption></figure>
+<figure><img data-shot src="img/e09-request-log.jpg" alt="CloudWatch Logs /autohub/app requests stream with two expanded JSON entries"><figcaption>The <code>requests</code> stream in <code>/autohub/app</code>: one JSON line per answer with time, question, success, answer length, duration and model. Note the model change from <code>gemini-3.5-flash</code> to <code>gemini-3.1-flash-lite</code> after INC-05.</figcaption></figure>
 
 <h2 id="backup">Backup and restore (WS-C)</h2>
 <h3>What we would have to restore</h3>
@@ -71,6 +74,7 @@ Every health-check line records the outcome, the HTTP codes and the duration:</p
 
 S3 lifecycle: backups/  -> expire after 8 days (brief: at least 7)
                content/  -> non-current versions expire after 30 days, versioning Enabled</code></pre>
+<figure><img data-shot src="img/e10-backups.jpg" alt="S3 console listing three MongoDB backup archives in backups/mongo/"><figcaption>The backups in S3 (<code>backups/mongo/</code>): the scheduled 18:00 and 00:00 UTC runs and the manual 00:45 UTC run used for the restore test (times shown in UTC+8).</figcaption></figure>
 
 <h3>The restore test (E-11)</h3>
 <pre><code>$ ./ops.sh restore-verify          (9 Nov 2026, into a throw-away MongoDB container)
@@ -121,10 +125,10 @@ Moving to IAM Identity Center with a least-privilege permission set is the first
 /autohub/jwt_refresh_secret    SecureString
 /autohub/jwt_secret            SecureString
 /autohub/meili_master_key      SecureString</code></pre>
-<figure><img data-shot src="img/e13-parameter-store.png" alt="Parameter Store console listing /autohub parameters with values hidden"><figcaption>Values are never shown. Note that one Gemini key was once pasted into an AI chat by mistake. It was deleted and replaced the same morning (INC-04).</figcaption></figure>
+<figure><img data-shot src="img/e13-parameter-store.jpg" alt="Parameter Store console listing /autohub parameters with values hidden"><figcaption>Names, tiers and types only. Values are never shown. Note that one Gemini key was once pasted into an AI chat by mistake. It was deleted and replaced the same morning (INC-04).</figcaption></figure>
 
 </div></main>
-<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua V. Bondoc, BSIT-4A.
 AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>

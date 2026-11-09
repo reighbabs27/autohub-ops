@@ -22,7 +22,7 @@
 <figure><img src="img/health-latency.svg" alt="Line chart of hourly health-check latency, flat around 610 ms with a spike in the incident hour">
 <figcaption>Every 5-minute health check from 8 Nov 16:20 to 9 Nov 01:25 UTC (110 checks, 107 passed). The only failures are the three checks during our planned outage (INC-03).
 The 3.5 s spike at 01:00 is the first check after a redeploy. Data: <code>site/data/health-hourly.csv</code>.</figcaption></figure>
-<figure><img data-shot src="img/e06-dashboard.png" alt="CloudWatch dashboard over the same period"><figcaption>The same period on the CloudWatch dashboard.</figcaption></figure>
+<figure><img data-shot src="img/e06-dashboard.jpg" alt="CloudWatch dashboard over the same period"><figcaption>The same period on the CloudWatch dashboard.</figcaption></figure>
 
 <h2 id="quality">Answer quality: the evaluation (E-04)</h2>
 <p><code>app/eval.py</code> sends 30 labelled questions to the model, with exactly the system prompt the live app uses (read from the rendered <code>librechat.yaml</code>).

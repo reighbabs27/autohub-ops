@@ -32,7 +32,7 @@ TEMPLATE = """<!doctype html>
 <main><div class="wrap">
 {body}
 </div></main>
-<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua V. Bondoc, BSIT-4A.
 AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>

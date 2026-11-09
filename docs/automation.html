@@ -33,7 +33,8 @@ health check: 110 runs between 2026-11-08T16:20Z and 2026-11-09T01:25Z, for exam
 backups (scheduled runs):
 2026-11-08T18:00  backup OK  s3://…/backups/mongo/LibreChat-20261108T180000Z.archive.gz
 2026-11-09T00:00:04+00:00 backup OK s3://…/backups/mongo/LibreChat-20261109T000000Z.archive.gz size=11030B</code></pre>
-<figure><img data-shot src="img/e14-automation-log.png" alt="CloudWatch Logs /autohub/automation showing scheduled health and backup lines"><figcaption>The same lines in CloudWatch Logs <code>/autohub/automation</code>.</figcaption></figure>
+<div class="tablewrap"><table><tr><td style="width:50%"><figure><img data-shot src="img/e14-automation-streams.jpg" alt="the three log streams of /autohub/automation: healthcheck, restore and backup"><figcaption>Log group <code>/autohub/automation</code> (2-week retention) with its three streams: health check, restore and backup.</figcaption></figure></td>
+<td><figure><img data-shot src="img/e14-automation-log.jpg" alt="health check log lines every 5 minutes, ok=0 during the planned outage then ok=1"><figcaption>The health-check stream: a line every 5 minutes, <code>ok=0</code> during the planned outage (01:10–01:20 UTC), then <code>ok=1</code> again from 01:25.</figcaption></figure></td></tr></table></div>
 <p><strong>Repository:</strong> all automation code is in the <code>autohub-ops</code> Git repository, with a README that explains how to deploy it.
 <code>./ops.sh redeploy</code> pushes changes from the repository to the running server.</p>
 
@@ -147,7 +148,7 @@ Owner: Reighfer Joshua Bondoc   Last tested: 2026-11-09 (INC-04)   Takes: 5 minu
 </pre>
 
 </div></main>
-<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua Bondoc.
+<footer><div class="wrap">SAM10 Systems Administration and Maintenance — final project by Reighfer Joshua V. Bondoc, BSIT-4A.
 AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreChat">LibreChat</a> (MIT licence, Danny Avila and contributors).
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>

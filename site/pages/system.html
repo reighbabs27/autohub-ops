@@ -6,7 +6,7 @@
 <div class="tablewrap"><table>
 <tr><th style="width:50%">Original LibreChat (E-05)</th><th>AutoHub Assistant (E-01)</th></tr>
 <tr><td><figure><img data-shot src="img/e05-librechat-original.png" alt="stock LibreChat start screen"><figcaption>Stock LibreChat: generic “LibreChat” title, model picker, no domain.</figcaption></figure></td>
-<td><figure><img data-shot src="img/e01-autohub-chat.png" alt="AutoHub Assistant answering the SUV question"><figcaption>AutoHub: own name and logo, dealership starter questions, build number and demo-data notice in the footer.</figcaption></figure></td></tr>
+<td><figure><img data-shot src="img/e01-autohub-chat.jpg" alt="AutoHub Assistant answering the SUV question"><figcaption>AutoHub: own name and logo, an answer from the dealership stock list, and the build number and demo-data notice in the footer.</figcaption></figure></td></tr>
 </table></div>
 <p><strong>Live URL (E-02):</strong> <a href="https://dd56jth94yne6.cloudfront.net">https://dd56jth94yne6.cloudfront.net</a>. Sign-ups are closed. Ask for a demo account.</p>
 
@@ -23,6 +23,8 @@
 <td><code>The model provider could not complete this request (status 400) … API key not valid.</code> Later the same question returned <code>404 … models/gemini-2.5-flash is no longer available to new users</code>.</td>
 <td class="fail">Failure: no answer at all. This is <a href="automation.html#inc2">INC-02</a></td></tr>
 </table></div>
+<div class="tablewrap"><table><tr><td style="width:50%"><figure><img data-shot src="img/e03-guardrail.jpg" alt="AutoHub refusing to estimate loan approval"><figcaption>Question 2: the loan guardrail holds.</figcaption></figure></td>
+<td><figure><img data-shot src="img/e03-failure-404.jpg" alt="AutoHub showing a status 404 provider error"><figcaption>Question 3: the failure, a 404 from the provider while the configured model was retired (INC-02).</figcaption></figure></td></tr></table></div>
 <p>Failures from the scored evaluation are listed on the <a href="results.html#quality">Results</a> page.</p>
 
 <hr>

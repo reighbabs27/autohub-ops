@@ -38,7 +38,6 @@ CloudTrail: account activity · AWS Budgets: cost alert
 | `app/request-log.sh` | One JSON line per answered question to CloudWatch `/autohub/app` (runs after each health check) |
 | `app/eval.py` | 30-question quality evaluation |
 | `docs/`, `site/` | Project website (GitHub Pages) and its source |
-| `PRESENTATION.md` | Script for the recorded presentation |
 | `app/` | Runs on the server: bootstrap, start script, LibreChat config template, automations, CloudWatch agent config, logo |
 | `content/` | Dealership info and inventory (invented) — uploaded to S3, read by the app |
 

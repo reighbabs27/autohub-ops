@@ -67,10 +67,10 @@ All of it is invented. Free-tier prompts may be used by Google to improve its pr
 
 <h2>6. How good it is</h2>
 <ul>
-<li><strong>The one number:</strong> <strong>__EVAL_SCORE__ correct (__EVAL_PCT__)</strong> on our labelled test set.</li>
+<li><strong>The one number:</strong> <strong>29/30 correct (97%)</strong> on our labelled test set.</li>
 <li><strong>How we measured it:</strong> <code>app/eval.py</code> sends 30 labelled questions to the model with the live system prompt. Each answer is checked automatically for required facts and forbidden phrases.
 The set covers 12 inventory lookups, 12 policy questions, 3 guardrail cases and 3 out-of-scope questions.</li>
-<li><strong>An example it gets wrong:</strong> __EVAL_FAIL_EXAMPLE__</li>
+<li><strong>An example it gets wrong:</strong> Q29 (“How much is a 2023 Toyota Camry?”) got no answer: the free-tier model did not reply within 90 seconds. In an earlier run on another model, 10 of 30 questions failed for the same kind of reason (rate limit, overload). Capacity, not accuracy, is the weak point. The keyword scoring itself could also pass a fluent wrong answer that happens to contain the right number.</li>
 </ul>
 
 <h2>7. How it is served</h2>

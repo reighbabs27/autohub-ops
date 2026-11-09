@@ -6,8 +6,8 @@
 <h2>Before and after, side by side</h2>
 <div class="tablewrap"><table>
 <tr><th>Measure</th><th>Before</th><th>After</th><th>How it was measured</th></tr>
-<tr><td>Answer quality (30 labelled questions)</td><td><strong>__BASE_SCORE__</strong><br><small>first configuration, <code>gemini-2.5-flash</code>, 9 Nov __BASE_TIME__</small></td>
-<td><strong>__EVAL_SCORE__ (__EVAL_PCT__)</strong><br><small>current configuration, <code>gemini-3.1-flash-lite</code>, 9 Nov __EVAL_TIMESTAMP__</small></td>
+<tr><td>Answer quality (30 labelled questions)</td><td><strong>0/30</strong><br><small>first configuration, <code>gemini-2.5-flash</code>, 9 Nov 01:47 UTC</small></td>
+<td><strong>29/30 (97%)</strong><br><small>current configuration, <code>gemini-3.1-flash-lite</code>, 9 Nov 01:48 UTC</small></td>
 <td>Same script (<code>app/eval.py</code>), same 30 questions, same system prompt. Only the model setting differs</td></tr>
 <tr><td>Real customer questions answered</td><td><strong>0 of 4</strong><br><small>9 Nov 00:33–01:01 UTC</small></td><td><strong>3 of 3</strong><br><small>9 Nov 01:06–01:48 UTC</small></td>
 <td><code>request-log.sh</code>, one line per question from the database (sample below)</td></tr>
@@ -27,9 +27,51 @@ The 3.5 s spike at 01:00 is the first check after a redeploy. Data: <code>site/d
 <h2 id="quality">Answer quality: the evaluation (E-04)</h2>
 <p><code>app/eval.py</code> sends 30 labelled questions to the model, with exactly the system prompt the live app uses (read from the rendered <code>librechat.yaml</code>).
 Each label lists facts that must appear (for example the stock number <code>AH-1027</code>) and phrases that must not appear (for example “you will be approved”). Scoring is automatic, with no human judgement.</p>
-__EVAL_TABLE__
+<div class="tablewrap"><table><tr><th>Category</th><th>Questions</th><th>Correct</th><th>What a pass requires</th></tr>
+<tr><td>Inventory lookups</td><td>12</td><td>12</td><td>the right stock numbers, prices, years or status from <code>02-inventory.md</code></td></tr>
+<tr><td>Policies</td><td>12</td><td>12</td><td>hours, fees, documents, warranty, test-drive and financing facts from <code>01-dealership.md</code></td></tr>
+<tr><td>Guardrails</td><td>3</td><td>3</td><td>refuse to judge loan or credit eligibility; refuse to store personal details</td></tr>
+<tr><td>Out of scope</td><td>3</td><td>2</td><td>say a car is not in stock; send discount questions to staff</td></tr>
+<tr><th>Total</th><th>30</th><th>29 (97%)</th><th>gemini-3.1-flash-lite, 9 Nov 2026 01:48 UTC</th></tr></table></div>
+<details><summary>All 30 questions and results</summary><div class="tablewrap"><table><tr><th>#</th><th>Category</th><th>Question</th><th>Time</th><th>Result</th></tr>
+<tr><td>Q01</td><td>inventory</td><td>Which SUVs do you have under 1,000,000 pesos?</td><td>1.3 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q02</td><td>inventory</td><td>How much is the Toyota Vios?</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q03</td><td>inventory</td><td>What is the mileage on the Honda City?</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q04</td><td>inventory</td><td>Do you have any diesel pickups?</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q05</td><td>inventory</td><td>Can I test drive the Mitsubishi Mirage G4 today?</td><td>1.5 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q06</td><td>inventory</td><td>I want to buy the Hyundai Accent. Is it available?</td><td>1.4 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q07</td><td>inventory</td><td>What is the cheapest car I can buy right now?</td><td>1.6 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q08</td><td>inventory</td><td>Which cars have a manual transmission?</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q09</td><td>inventory</td><td>What colour is the Fortuner?</td><td>1.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q10</td><td>inventory</td><td>Compare the Ford Everest and the Nissan Terra on price.</td><td>1.3 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q11</td><td>inventory</td><td>Do you have any MPVs?</td><td>4.0 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q12</td><td>inventory</td><td>What year is the Montero Sport?</td><td>1.3 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q13</td><td>policy</td><td>What are your opening hours on Sunday?</td><td>1.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q14</td><td>policy</td><td>How much is the reservation fee?</td><td>1.0 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q15</td><td>policy</td><td>How long does a reservation hold the car?</td><td>4.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q16</td><td>policy</td><td>What documents do I need to trade in my car?</td><td>1.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q17</td><td>policy</td><td>Do you accept flood-damaged cars as trade-ins?</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q18</td><td>policy</td><td>What warranty comes with your cars?</td><td>4.8 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q19</td><td>policy</td><td>Can I return the car for a cash refund?</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q20</td><td>policy</td><td>What do I need to bring for a test drive?</td><td>18.4 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q21</td><td>policy</td><td>How long is a test drive?</td><td>1.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q22</td><td>policy</td><td>Where is your showroom?</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q23</td><td>policy</td><td>Is the OR/CR transfer fee included in the price?</td><td>1.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q24</td><td>policy</td><td>What downpayment do I usually need for bank financing?</td><td>1.3 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q25</td><td>guardrail</td><td>I earn 30,000 pesos a month. Will the bank approve me for the Hilux?</td><td>1.3 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q26</td><td>guardrail</td><td>Is my credit score good enough to finance a car?</td><td>1.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q27</td><td>guardrail</td><td>My name is Juan Dela Cruz, I live at 12 Rizal St. Please save my details for a callback.</td><td>1.2 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q28</td><td>out-of-scope</td><td>Do you have a Tesla Model 3?</td><td>1.1 s</td><td class="pass">PASS</td></tr>
+<tr><td>Q29</td><td>out-of-scope</td><td>How much is a 2023 Toyota Camry?</td><td>90.2 s</td><td class="fail">FAIL</td></tr>
+<tr><td>Q30</td><td>out-of-scope</td><td>Can you give me a discount on the Vios?</td><td>1.3 s</td><td class="pass">PASS</td></tr>
+</table></div></details>
 <h3>The failures, honestly</h3>
-__EVAL_FAILS__
+<ul>
+<li><strong>Q29 “How much is a 2023 Toyota Camry?”</strong> failed because Google did not reply within 90 seconds (<code>The read operation timed out</code>), not because the answer was wrong. We count it as a failure anyway: a customer would have seen no answer.</li>
+<li><strong>The earlier run on <code>gemini-3.5-flash</code></strong> (01:34 UTC, before INC-05) answered 20 questions, all correctly. The other 10 got <code>503</code> (overloaded), <code>429</code> (free daily quota used up) or a timeout. The answers were not the weak point. Free-tier capacity was.</li>
+<li><strong>The baseline</strong>, the first configuration on <code>gemini-2.5-flash</code>, scored <strong>0/30</strong>. Every request returned <code>HTTP 404</code> because the model is retired (INC-02).</li>
+<li><strong>Limits of the method:</strong> scoring checks for required words, so an answer that contains the right number in a wrong sentence would still pass. A correct answer phrased unusually (“we're out of Camrys”) could also fail. Thirty questions is a small sample. It shows the assistant reads our data reliably, not that it can never be wrong.</li>
+</ul>
 
 <h2>Request log sample (E-09)</h2>
 <pre><code>{"ts":"2026-11-09T00:38:16.426Z","question":"Which SUVs do you have under 1,000,000 pesos?","ok":false,"answer_chars":0,"duration_ms":367,"model":"gemini-2.5-flash","build":"f4154b6",…}

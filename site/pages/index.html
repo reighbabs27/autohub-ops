@@ -7,7 +7,7 @@ The assistant answers only from the dealership's own information.</p>
 
 <div class="cards">
   <div class="card"><div class="num">97.3%</div><div class="lbl">health checks passed, 107 of 110 (8 Nov 16:20 – 9 Nov 01:25 UTC). The 3 failures were our own planned outage test</div></div>
-  <div class="card"><div class="num">__EVAL_PCT__</div><div class="lbl">answer quality: __EVAL_SCORE__ labelled test questions answered correctly (scored by a script)</div></div>
+  <div class="card"><div class="num">97%</div><div class="lbl">answer quality: 29/30 labelled test questions answered correctly (scored by a script)</div></div>
   <div class="card"><div class="num">9 min</div><div class="lbl">time to detect a real outage, and 4 min 42 s to fix it after the alarm email</div></div>
   <div class="card"><div class="num">32 s</div><div class="lbl">to restore the whole database from backup. Counts matched exactly</div></div>
 </div>
@@ -49,7 +49,7 @@ Everything else runs in one AWS account in Sydney.</p>
 
 <h2>What improved</h2>
 <p>Before these changes the assistant answered <strong>0 of 30</strong> test questions, because every request failed.
-After them it answers <strong>__EVAL_SCORE__</strong>. Outages are now noticed within about 10 minutes instead of whenever a customer complains.
+After them it answers <strong>29/30</strong>. Outages are now noticed within about 10 minutes instead of whenever a customer complains.
 The system can also be rebuilt from the repository with four scripts.
 Details and graphs are on the <a href="results.html">Results</a> page.</p>
 

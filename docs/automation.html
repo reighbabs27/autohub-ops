@@ -19,13 +19,13 @@
 <tr><td><strong>Database backup</strong></td><td><code>mongodump</code> of the LibreChat database, gzipped to S3 <code>backups/mongo/</code>. Publishes <code>BackupSucceeded</code>, which raises an alarm if a backup is missed</td>
 <td>00:00, 06:00, 12:00, 18:00 UTC, systemd timer <code>autohub-backup.timer</code></td><td><code>app/backup-mongo.sh</code></td></tr>
 </table></div>
-<p>Both were installed by the EC2 bootstrap on 8 Nov 2026 at 16:15 UTC and have run without anybody touching them since. The timestamps come from the logs:</p>
+<p>Both were installed by the EC2 bootstrap on 8 Nov 2026 (first health check 16:20 UTC) and have run without anybody touching them since. The timestamps come from the logs:</p>
 <pre><code>$ systemctl list-timers 'autohub-*'
 NEXT                        LEFT          LAST                        PASSED    UNIT
 Mon 2026-11-09 00:40:00 UTC 4min 17s left Mon 2026-11-09 00:35:00 UTC 42s ago   autohub-health.timer
 Mon 2026-11-09 06:00:00 UTC 5h 24min left Mon 2026-11-09 00:00:00 UTC 35min ago autohub-backup.timer
 
-health check: 110 runs between 2026-11-08T16:15Z and 2026-11-09T01:25Z, for example
+health check: 110 runs between 2026-11-08T16:20Z and 2026-11-09T01:25Z, for example
 2026-11-09T00:25:03+00:00 health ok=1 local_http=200 public_http=200 latency_ms=714
 2026-11-09T00:30:04+00:00 health ok=1 local_http=200 public_http=200 latency_ms=638
 2026-11-09T00:35:02+00:00 health ok=1 local_http=200 public_http=200 latency_ms=567
@@ -38,7 +38,7 @@ backups (scheduled runs):
 <code>./ops.sh redeploy</code> pushes changes from the repository to the running server.</p>
 
 <h2>The incidents (WS-F)</h2>
-<p>We had four real incidents. <strong>INC-01 is our main write-up</strong>, with timings and a runbook. The others are shorter.</p>
+<p>We had five real incidents. <strong>INC-01 is our main write-up</strong>, with timings and a runbook. The others are shorter.</p>
 
 <h3 id="inc1">INC-01: the app silently ignored its configuration</h3>
 <div class="tablewrap"><table>
@@ -94,6 +94,14 @@ A new key was created and saved through the validating prompt at 01:33:48, and A
 <strong>Prevention:</strong> rotation is now a runbook step (below), so the new key is stored <em>before</em> the old one is deleted.
 <strong>Gap:</strong> the health check did not catch this, because <code>/health</code> does not call the model. A failed-answer metric is first on <a href="next.html">Next steps</a>.</p>
 
+<h3 id="inc5">INC-05: our own evaluation used up the model's free daily quota</h3>
+<p>While the 30-question evaluation ran (9 Nov 01:34 UTC), Google began answering <code>503</code> and then <code>429 … quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier</code>.
+The evaluation and the live app share the same key and model, so customers would also have got errors until the quota reset.
+<strong>Detected</strong> at about 01:45 from the evaluation log. <strong>Fixed</strong> at 01:47:17 by switching <code>/autohub/gemini_model</code> to
+<code>gemini-3.1-flash-lite</code>, a model with its own quota that we had confirmed answers (HTTP 200), then redeploying. A test question at 01:48 got a correct answer.
+<strong>Root cause:</strong> the free tier limits requests per day <em>per model</em>, and we had not checked that limit before pointing a 30-request test at the production model.
+<strong>Prevention:</strong> evaluations now run against the model the operator chooses (<code>eval.py MODEL</code>). The next step is to give testing its own key and project, so a test can never use up production's quota.</p>
+
 <h2 id="runbook">Runbook: rotate or replace the Gemini API key</h2>
 <pre>RUNBOOK: Rotate / replace the Gemini API key
 Owner: Reighfer Joshua Bondoc   Last tested: 2026-11-09 (INC-04)   Takes: 5 minutes   Ask: Reighfer
@@ -144,10 +152,11 @@ AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreC
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>
 document.querySelectorAll('img[data-shot]').forEach(function(img){
-  img.addEventListener('error',function(){
+  function missing(){
     var d=document.createElement('div');d.className='shot-missing';
     d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
-    img.replaceWith(d);});
+    img.replaceWith(d);}
+  if (img.complete && img.naturalWidth===0) missing(); else img.addEventListener('error',missing);
 });
 </script>
 </body></html>

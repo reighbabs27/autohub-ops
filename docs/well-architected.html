@@ -18,7 +18,7 @@ The first pass is on the first working deployment (8 Nov, before monitoring). Th
 <tr><th style="width:15%">Pillar</th><th style="width:22%">What the framework asks</th><th>What AutoHub does now</th><th style="width:11%">Pass 1<br>8 Nov</th><th style="width:11%">Pass 2<br>9 Nov</th></tr>
 <tr><td><strong>Operational Excellence</strong></td><td>Run and monitor the workload, automate changes, learn from failures</td>
 <td>The whole deployment is 4 scripts plus <code>ops.sh</code> in Git. Two scheduled automations (health check, backup). Redeploy is one command.
-Three incidents written up with root causes and prevention, plus a runbook.</td>
+Five incidents written up with root causes and prevention, plus a runbook.</td>
 <td><span class="verdict v-adequate">adequate</span></td><td><span class="verdict v-good">good</span></td></tr>
 <tr><td><strong>Security</strong></td><td>MFA, least privilege, no secrets in code, audit trail, data protection</td>
 <td>Secrets in Parameter Store (SecureString). The instance role is limited to its own parameters and bucket paths. No SSH, no open ports except 3080 from CloudFront.
@@ -29,7 +29,7 @@ EBS and S3 are encrypted, CloudTrail is on, and sign-ups are closed. Weak spots:
 But it is a single instance in one Availability Zone with no automatic replacement.</td>
 <td><span class="verdict v-gap">gap</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
 <tr><td><strong>Performance Efficiency</strong></td><td>Right-size resources, measure performance</td>
-<td>Measured: health-check latency about 615 ms average through CloudFront, and __EVAL_TIME__ mean answer time from the model (30-question evaluation).
+<td>Measured: health-check latency about 615 ms average through CloudFront, and typically 1–2 s (mean 5.1 s, pulled up by one 90 s provider timeout) mean answer time from the model (30-question evaluation).
 The t3.small (2 GB) fits once the unused RAG and admin containers are disabled and 2 GB of swap is added. Memory is watched by an alarm.</td>
 <td><span class="verdict v-adequate">adequate</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
 <tr><td><strong>Cost Optimization</strong></td><td>Pay only for what you use, tag everything, budget alerts</td>
@@ -45,7 +45,7 @@ The instance still runs 24/7 even when nobody uses it.</td>
 <h2>What changed between the passes</h2>
 <ul>
 <li><strong>Reliability, gap → adequate:</strong> after pass 1 we added the health check, the alarms and the tested restore. We also proved detection with a planned outage: alarm after 9 minutes.</li>
-<li><strong>Operational Excellence, adequate → good:</strong> incidents INC-01 to INC-04 were found and fixed. Each fix went into the scripts, so a rebuild cannot reintroduce it.</li>
+<li><strong>Operational Excellence, adequate → good:</strong> incidents INC-01 to INC-05 were found and fixed. Each fix went into the scripts, so a rebuild cannot reintroduce it.</li>
 </ul>
 
 <h2>Which pillar we optimised for, and which we accepted as weaker</h2>
@@ -66,10 +66,11 @@ AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreC
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>
 document.querySelectorAll('img[data-shot]').forEach(function(img){
-  img.addEventListener('error',function(){
+  function missing(){
     var d=document.createElement('div');d.className='shot-missing';
     d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
-    img.replaceWith(d);});
+    img.replaceWith(d);}
+  if (img.complete && img.naturalWidth===0) missing(); else img.addEventListener('error',missing);
 });
 </script>
 </body></html>

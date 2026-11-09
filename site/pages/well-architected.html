@@ -20,7 +20,7 @@ EBS and S3 are encrypted, CloudTrail is on, and sign-ups are closed. Weak spots:
 But it is a single instance in one Availability Zone with no automatic replacement.</td>
 <td><span class="verdict v-gap">gap</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
 <tr><td><strong>Performance Efficiency</strong></td><td>Right-size resources, measure performance</td>
-<td>Measured: health-check latency about 615 ms average through CloudFront, and __EVAL_TIME__ mean answer time from the model (30-question evaluation).
+<td>Measured: health-check latency about 615 ms average through CloudFront, and typically 1–2 s (mean 5.1 s, pulled up by one 90 s provider timeout) mean answer time from the model (30-question evaluation).
 The t3.small (2 GB) fits once the unused RAG and admin containers are disabled and 2 GB of swap is added. Memory is watched by an alarm.</td>
 <td><span class="verdict v-adequate">adequate</span></td><td><span class="verdict v-adequate">adequate</span></td></tr>
 <tr><td><strong>Cost Optimization</strong></td><td>Pay only for what you use, tag everything, budget alerts</td>

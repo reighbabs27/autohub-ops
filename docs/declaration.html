@@ -26,7 +26,7 @@
 </table></div>
 
 <h2>Use of AI tools</h2>
-<p>I used Claude (Anthropic) as an assistant throughout. It drafted the deployment and automation scripts, ran commands in my AWS CloudShell session at my direction, helped diagnose incidents INC-01 to INC-04, and drafted the text of this website.
+<p>I used Claude (Anthropic) as an assistant throughout. It drafted the deployment and automation scripts, ran commands in my AWS CloudShell session at my direction, helped diagnose incidents INC-01 to INC-05, and drafted the text of this website.
 I checked its output against the live system: every number and log line on this site comes from command output in my own account (shown next to each claim), and I tested every script by running it.</p>
 <p>One security slip happened during the work: I pasted a Gemini API key into the AI chat. I deleted that key in Google AI Studio the same morning and replaced it (incident INC-04). No key appears in the repository or on this site.</p>
 
@@ -43,10 +43,11 @@ AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreC
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>
 document.querySelectorAll('img[data-shot]').forEach(function(img){
-  img.addEventListener('error',function(){
+  function missing(){
     var d=document.createElement('div');d.className='shot-missing';
     d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
-    img.replaceWith(d);});
+    img.replaceWith(d);}
+  if (img.complete && img.naturalWidth===0) missing(); else img.addEventListener('error',missing);
 });
 </script>
 </body></html>

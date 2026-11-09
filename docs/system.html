@@ -76,18 +76,18 @@ All of it is invented. Free-tier prompts may be used by Google to improve its pr
 
 <h2>6. How good it is</h2>
 <ul>
-<li><strong>The one number:</strong> <strong>__EVAL_SCORE__ correct (__EVAL_PCT__)</strong> on our labelled test set.</li>
+<li><strong>The one number:</strong> <strong>29/30 correct (97%)</strong> on our labelled test set.</li>
 <li><strong>How we measured it:</strong> <code>app/eval.py</code> sends 30 labelled questions to the model with the live system prompt. Each answer is checked automatically for required facts and forbidden phrases.
 The set covers 12 inventory lookups, 12 policy questions, 3 guardrail cases and 3 out-of-scope questions.</li>
-<li><strong>An example it gets wrong:</strong> __EVAL_FAIL_EXAMPLE__</li>
+<li><strong>An example it gets wrong:</strong> Q29 (“How much is a 2023 Toyota Camry?”) got no answer: the free-tier model did not reply within 90 seconds. In an earlier run on another model, 10 of 30 questions failed for the same kind of reason (rate limit, overload). Capacity, not accuracy, is the weak point. The keyword scoring itself could also pass a fluent wrong answer that happens to contain the right number.</li>
 </ul>
 
 <h2>7. How it is served</h2>
 <ul>
 <li><strong>Where it runs:</strong> one EC2 t3.small (Amazon Linux 2023, Docker) in ap-southeast-2 (Sydney), behind CloudFront for HTTPS.</li>
-<li><strong>What calls it:</strong> the browser calls <code>https://dd56jth94yne6.cloudfront.net/api/…</code>. LibreChat then calls Google's <code>generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent</code>.</li>
-<li><strong>The model:</strong> Google <code>gemini-3.5-flash</code>, free tier, key held in Parameter Store.</li>
-<li><strong>If the model is unavailable:</strong> the chat shows the provider's error (for example 429 rate limit or 404 retired model) and no answer. The site stays up and conversations are kept. The next step on our list is a custom metric that alarms on failed answers.</li>
+<li><strong>What calls it:</strong> the browser calls <code>https://dd56jth94yne6.cloudfront.net/api/…</code>. LibreChat then calls Google's <code>generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:streamGenerateContent</code>.</li>
+<li><strong>The model:</strong> Google <code>gemini-3.1-flash-lite</code>, free tier, key held in Parameter Store. (We started on <code>gemini-2.5-flash</code>, which was retired, then <code>gemini-3.5-flash</code>, whose free daily quota was too small: see INC-02 and INC-05.)</li>
+<li><strong>If the model is unavailable:</strong> the chat shows the provider's error (for example 429 quota exhausted, 503 overloaded or 404 retired model) and no answer. The site stays up and conversations are kept. The next step on our list is a custom metric that alarms on failed answers.</li>
 </ul>
 
 <h2>8. Limitations and risks</h2>
@@ -112,10 +112,11 @@ AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreC
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>
 document.querySelectorAll('img[data-shot]').forEach(function(img){
-  img.addEventListener('error',function(){
+  function missing(){
     var d=document.createElement('div');d.className='shot-missing';
     d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
-    img.replaceWith(d);});
+    img.replaceWith(d);}
+  if (img.complete && img.naturalWidth===0) missing(); else img.addEventListener('error',missing);
 });
 </script>
 </body></html>

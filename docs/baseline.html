@@ -46,10 +46,11 @@ AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreC
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>
 document.querySelectorAll('img[data-shot]').forEach(function(img){
-  img.addEventListener('error',function(){
+  function missing(){
     var d=document.createElement('div');d.className='shot-missing';
     d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
-    img.replaceWith(d);});
+    img.replaceWith(d);}
+  if (img.complete && img.naturalWidth===0) missing(); else img.addEventListener('error',missing);
 });
 </script>
 </body></html>

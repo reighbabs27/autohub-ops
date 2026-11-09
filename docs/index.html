@@ -15,8 +15,8 @@ used-car dealership. Customers ask what cars are in stock, how trade-ins and fin
 The assistant answers only from the dealership's own information.</p>
 
 <div class="cards">
-  <div class="card"><div class="num">97.3%</div><div class="lbl">health checks passed, 107 of 110 (8 Nov 16:15 – 9 Nov 01:25 UTC). The 3 failures were our own planned outage test</div></div>
-  <div class="card"><div class="num">__EVAL_PCT__</div><div class="lbl">answer quality: __EVAL_SCORE__ labelled test questions answered correctly (scored by a script)</div></div>
+  <div class="card"><div class="num">97.3%</div><div class="lbl">health checks passed, 107 of 110 (8 Nov 16:20 – 9 Nov 01:25 UTC). The 3 failures were our own planned outage test</div></div>
+  <div class="card"><div class="num">97%</div><div class="lbl">answer quality: 29/30 labelled test questions answered correctly (scored by a script)</div></div>
   <div class="card"><div class="num">9 min</div><div class="lbl">time to detect a real outage, and 4 min 42 s to fix it after the alarm email</div></div>
   <div class="card"><div class="num">32 s</div><div class="lbl">to restore the whole database from backup. Counts matched exactly</div></div>
 </div>
@@ -42,6 +42,9 @@ Everything else runs in one AWS account in Sydney.</p>
 <tr><td>The assistant could not answer anything: first a bad API key, then Google retired the AI model we had chosen.</td>
 <td>The key is now tested with Google before it is saved. The model was switched to one confirmed to work.</td>
 <td><a href="automation.html#inc2">Incident INC-02</a></td></tr>
+<tr><td>Our own 30-question test used up the AI model's free daily quota, so customers would have got errors.</td>
+<td>Switched to a model with its own quota within 2 minutes. Tests can now target a different model.</td>
+<td><a href="automation.html#inc5">Incident INC-05</a></td></tr>
 <tr><td>Nobody would know if the site went down.</td>
 <td>A health check runs every 5 minutes through the public HTTPS address and feeds 7 alarms that email the operator.</td>
 <td><a href="operations.html#monitoring">Real alert email</a></td></tr>
@@ -55,7 +58,7 @@ Everything else runs in one AWS account in Sydney.</p>
 
 <h2>What improved</h2>
 <p>Before these changes the assistant answered <strong>0 of 30</strong> test questions, because every request failed.
-After them it answers <strong>__EVAL_SCORE__</strong>. Outages are now noticed within about 10 minutes instead of whenever a customer complains.
+After them it answers <strong>29/30</strong>. Outages are now noticed within about 10 minutes instead of whenever a customer complains.
 The system can also be rebuilt from the repository with four scripts.
 Details and graphs are on the <a href="results.html">Results</a> page.</p>
 
@@ -72,10 +75,11 @@ AutoHub Assistant is a reskin of <a href="https://github.com/LibreChat-AI/LibreC
 All dealership data is invented. Source: the <code>autohub-ops</code> repository.</div></footer>
 <script>
 document.querySelectorAll('img[data-shot]').forEach(function(img){
-  img.addEventListener('error',function(){
+  function missing(){
     var d=document.createElement('div');d.className='shot-missing';
     d.textContent='Screenshot to add: docs/img/'+img.getAttribute('src').replace('img/','')+' — '+img.alt;
-    img.replaceWith(d);});
+    img.replaceWith(d);}
+  if (img.complete && img.naturalWidth===0) missing(); else img.addEventListener('error',missing);
 });
 </script>
 </body></html>

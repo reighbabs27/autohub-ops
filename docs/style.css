@@ -50,3 +50,4 @@ figcaption{font-size:13px;color:var(--muted);margin-top:6px}
 svg.diagram{width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:18px 0 30px}
 @media (max-width:600px){h1{font-size:24px} body{font-size:15px}}
+details{margin:10px 0}summary{cursor:pointer;font-weight:600;color:var(--brand)}

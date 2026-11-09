@@ -55,10 +55,6 @@ If you run short, cut the CloudShell part (show the S3 backups only). If you run
 5. Run `python3 site/build.py`, then `git add -A && git commit -m "Add presentation video" && git push`.
 6. Open the website and check the video plays.
 
-## 4. Screenshots only you can take
+## 4. Screenshots
 
-This one is still shown as a "Screenshot to add" box on the website. Save it with exactly this name in `docs/img/`, then rebuild and push:
-
-| File | What to capture |
-|---|---|
-| `e12-mfa.png` | Your sign-in's MFA page (for example Google account → Security → 2-Step Verification "On"). Hide phone numbers. If you cannot show MFA, delete that figure from `site/pages/operations.html`, because the text already explains the federated sign-in. |
+All screenshots are in `docs/img/` and on the website. If you retake any, keep the same file name, rebuild and push.

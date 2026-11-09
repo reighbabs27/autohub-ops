@@ -113,7 +113,7 @@ RESTORED copy:   users=1  conversations=2  messages=6
 MFA on the operator's sign-in is shown in the screenshot below.
 Moving to IAM Identity Center with a least-privilege permission set is the first gap on the
 <a href="well-architected.html">Well-Architected review</a>.</p>
-<figure><img data-shot src="img/e12-mfa.png" alt="Account security page showing MFA enabled"><figcaption>MFA enabled on the operator's sign-in.</figcaption></figure>
+<figure><img data-shot src="img/e12-mfa.png" alt="Google 2-Step Verification page showing the account is protected"><figcaption>MFA on the operator's sign-in: the Google account used to sign in to AWS has 2-Step Verification on (passkey, Google prompt, phone; phone number hidden). Taken 9 Nov 2026.</figcaption></figure>
 <h3>Secrets in Parameter Store (E-13)</h3>
 <pre><code>$ aws ssm get-parameters-by-path --path /autohub --query 'Parameters[].[Name,Type]' --output table
 /autohub/allow_registration    String

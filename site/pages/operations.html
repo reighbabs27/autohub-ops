@@ -35,7 +35,7 @@ The alarm went from OK to ALARM at <strong>01:16:03 UTC</strong> and SNS emailed
 2026-11-08T16:13:03.437000+00:00   Alarm updated from INSUFFICIENT_DATA to ALARM</code></pre>
 <div class="tablewrap"><table><tr><td style="width:50%"><figure><img data-shot src="img/e08-alarm-fired.jpg" alt="autohub-assistant-down alarm graph with the red in-alarm period"><figcaption>The <code>autohub-assistant-down</code> alarm graph: HealthCheckOK drops to 0 and the red band marks the ALARM period.</figcaption></figure></td>
 <td><figure><img data-shot src="img/e08-alarm-history.jpg" alt="alarm history showing the SNS action at 01:16:03 and the return to OK at 01:26:03"><figcaption>Alarm history: OK → ALARM at 01:16:03 UTC with the SNS email action, and back to OK at 01:26:03 UTC.</figcaption></figure></td></tr></table></div>
-<figure><img data-shot src="img/e08-alert-email.png" alt="ALARM email in Gmail with date and time visible"><figcaption>The ALARM email as received, with date and time visible.</figcaption></figure>
+<figure><img data-shot src="img/e08-alert-email.png" alt="Gmail inbox showing the ALARM and OK emails for autohub-assistant-down"><figcaption>The two SNS emails as received in the operator's Gmail: ALARM at 9:16 AM local time (UTC+8, i.e. 01:16 UTC), then OK after the fix.</figcaption></figure>
 
 <h3>Logs and request logging (E-09)</h3>
 <p>Four CloudWatch log groups with <strong>14-day retention</strong>:

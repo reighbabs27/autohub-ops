@@ -1,0 +1,6 @@
+# never commit secrets or local state
+*.env.local
+.env
+autohub-state.env
+*.pem
+__pycache__/

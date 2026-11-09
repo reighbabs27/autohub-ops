@@ -57,7 +57,7 @@ If you run short, cut the CloudShell part (show the S3 backups only). If you run
 
 ## 4. Screenshots only you can take
 
-This one is still shown as "Screenshot to add" boxes on the website. Save them with exactly these names in `docs/img/`, then rebuild and push:
+This one is still shown as a "Screenshot to add" box on the website. Save it with exactly this name in `docs/img/`, then rebuild and push:
 
 | File | What to capture |
 |---|---|

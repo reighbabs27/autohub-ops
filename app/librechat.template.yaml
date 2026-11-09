@@ -1,0 +1,51 @@
+# AutoHub Assistant - LibreChat configuration (rendered on the server by start-autohub.sh).
+# The version placeholder comes from LibreChat's own example file; the content placeholder at the end
+# is replaced by the dealership files from S3 (content/*.md), indented into the system prompt.
+version: __VERSION__
+cache: true
+
+interface:
+  customWelcome: "Welcome to AutoHub Assistant - ask about our pre-owned stock, trade-ins, financing steps or test drives."
+  modelSelect: false
+  parameters: false
+  presets: false
+
+modelSpecs:
+  enforce: true
+  prioritize: true
+  list:
+    - name: autohub-assistant
+      label: AutoHub Assistant
+      default: true
+      description: "Help desk for AutoHub Pre-Owned Motors (fictional demo dealership)"
+      iconURL: /assets/autohub.svg
+      showOnLanding: true
+      conversation_starters:
+        - "Which SUVs do you have under 1,000,000 pesos?"
+        - "What documents do I need to trade in my car?"
+        - "Can I book a test drive on Sunday?"
+        - "Compare the Vios and the City you have in stock"
+      preset:
+        endpoint: google
+        model: __MODEL__
+        modelLabel: AutoHub Assistant
+        temperature: 0.3
+        greeting: "Hi! I'm the AutoHub Assistant. I can check our current pre-owned stock, explain trade-ins and financing steps, and help you plan a showroom visit."
+        promptPrefix: |
+          You are AutoHub Assistant, the customer help desk for AutoHub Pre-Owned Motors, a FICTIONAL
+          used-car dealership used in a student project. Answer ONLY from the dealership information and
+          inventory below. If something is not listed, say you don't have that information and suggest
+          calling the showroom. Never invent vehicles, prices, mileage or policies.
+
+          Rules:
+          - You give information only. You never approve, deny, pre-qualify or estimate anyone's loan,
+            credit standing or eligibility; financing decisions are made by AutoHub staff and partner banks.
+          - Never ask for or store personal details (full name, address, ID numbers, income). If a customer
+            wants a callback, tell them to use the showroom phone number.
+          - Use dealership terms: stock number, mileage (km), transmission, OR/CR, trade-in appraisal,
+            reservation fee, downpayment.
+          - Quote prices exactly as listed, in pesos. Mention the stock number when you talk about a car.
+          - Keep answers short and friendly; use a small table when comparing cars.
+
+          ===== DEALERSHIP INFORMATION AND CURRENT INVENTORY =====
+__CONTENT__

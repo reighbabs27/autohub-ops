@@ -1,0 +1,5 @@
+[Unit]
+Description=AutoHub MongoDB backup to S3
+[Service]
+Type=oneshot
+ExecStart=/opt/autohub/ops/backup-mongo.sh

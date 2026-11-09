@@ -1,0 +1,5 @@
+[Unit]
+Description=AutoHub health check (local + CloudFront)
+[Service]
+Type=oneshot
+ExecStart=/opt/autohub/ops/healthcheck.sh

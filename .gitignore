@@ -4,3 +4,4 @@
 autohub-state.env
 *.pem
 __pycache__/
+PRESENTATION.md
